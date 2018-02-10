@@ -94,7 +94,7 @@ We had an $R^2$ of 0.71 which means that 71% of the variability in $log(cp\_new)
 # Conclusion
 Overall, log-transforming our original SLR, $cp\_new \text{~} hp$ to $log(cp\_new) \text{~} log(hp)$ improved the residual plot and better addressed the conditions necessary for inference of a linear regression model. We made 95% confidence intervals on the slope as well as the mean $cp\_new$ at $hp = 40$ of our log-transformed model and a 95% prediction interval of individual $cp\_new$ at $hp = 40$. What was interesting was that there seemed to be a really high correlation between $hp$ and $cp\_new$, whereas in Part 1, when we did an exploratory analysis, for one of our plots involving another variable called $power\_up\_stardust$, at first glance, it looked to be almost a perfect correlation, with the exception of the Eevee data points. We weren't too surprised by the results of the data because after our explanatory analysis, we were expecting a good correlation between $hp$ and $cp\_new$. 
 
-Moving forward, I wonder how adding other predictor variables will affect the fit of the model. In addition, is hp correlated with any other predictor variables within the data set? Lastly, what changes do we need to make to the model in order to better account for the Eevee data points? 
+Moving forward, we wonder how adding other predictor variables will affect the fit of the model. In addition, is hp correlated with any other predictor variables within the data set? Lastly, what changes do we need to make to the model in order to better account for the Eevee data points? 
 
 
 
