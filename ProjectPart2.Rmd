@@ -1,0 +1,69 @@
+---
+title: "MATH158 Project Part 2"
+author: "Lathan Liou and Alex Gui"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(skimr)
+library(readr)
+library(broom)
+pokemon <- read_csv("/Users/lathanliou/Desktop/College/Junior\ Year/Spring/Linear\ Models/math158-project/pokemon.csv")
+```
+
+# Introduction
+Pokemon Go became an overnight sensation with hundreds of milions of people having downloaded the mobile game. The whole point of the game is to try to catch all the Pokemon available and train them (increase their combat power, or cp) so that you can battle other players with your strengthened Pokemon. A quick note about Pokemon is that they can evolve into stronger forms, so an evolved Pokemon will generally always have a higher cp than a non-evolved Pokemon. A number of people have tried to generate models in an attempt to predict the best way to maximize cp for their Pokemon. In other words, people have tried to generate models that most closely match how the game's algorithms and mechanics calculate cp in reality. This is what we will attempt to do ourselves: create a model to predict cp. In this segment of our project, we'll fit a simple regression model, regressing $cp_{new}$, the combat power of the evolved Pokemon on $hp$, which is hit points, or the amount of health a Pokemon has. For some context, if $hp$ goes to 0, your Pokemon will faint, and you cannot battle with it anymore. Ideally, you'd like a Pokemon with a large amount of $hp$, so that it will take more hits to deplete it to 0. We decided to pick $hp$ as our predictor variable in our SLR because we think $hp$ could be an important predictor for $cp_new$ given that having both high $hp$ and high $cp$ seem to grant Pokemon a distinct advantage over opponent Pokemon!
+
+To refresh your memory, the dataset we are looking at is an original data set collected by OpenIntro, most likely by some individual who was playing the game, Pokemon Go and who decided to record data. The dataset contains 75 observations across 26 variables, with each observation representing a randomly generated Pokemon that the gamer caught. Only 4 species are represented in this data, which is not representative of the entire Pokemon Go world, in which there are over 200 species and counting (depending on game developers' updates). 
+
+You can follow our work here: https://github.com/alexaaag/math158-project.
+
+# Hypotheses
+$H_0: \beta_1 = 0$
+$H_a: \beta_1 > 0$
+
+# Checking Assumptions
+```{r}
+#create plot
+ggplot(pokemon, aes(x=log(hp), y=log(cp_new))) + 
+  geom_point() + 
+  geom_jitter(width = 1)
+
+#SLR
+fmla <- as.formula(log(cp_new)~log(hp))
+
+#create residual plot
+ggplot(lm(fmla, data = pokemon)) + 
+  geom_point(aes(x=.fitted, y=.resid)) + 
+  geom_hline(yintercept = 0)
+
+ggplot(pokemon, aes(x=log(weight), y=cp_new)) + 
+  geom_point()
+
+fmla.t <- as.formula(cp_new~log(weight))
+ggplot(lm(fmla.t, data = pokemon)) + 
+  geom_point(aes(x=.fitted, y=.resid)) + 
+  geom_hline(yintercept = 0)
+
+ggplot(pokemon, aes(x=hp, y=cp_new)) + 
+  geom_point()
+```
+
+The assumptions we checked for linear regression were linearity, indepedence, normal errors, and equal variance. We plotted $cp_{new}$ vs. $hp$ and generated a residual plot. Currently, the plot of $cp_{new}$ vs. $hp$ does not look linear and in the residual plot, the errors are not symmetric nor are they constant. So far, none of the assumptions for linear regression are being met, aside from the independent errors condition. First, we transformed the $y$ variable, $cp_{new}$ using a log transformation. The plot looks a lot more linear since a log transformation squishes large values. The residual plot, while better, still is not the best because there is a distinctive pattern as opposed to the random scattered points that we would like to see. Next, we tried log-transforming the $x$ variable, $hp$, which didn't improve linearity, normality or equal variance. Lastly, we log-transformed both the $y$ and the $x$ variables and that improved linearity as well as the residual plot. The residual plot as shown in Figure 2b, demonstrates normality and constancy of errors.
+
+# Inference
+We ran a confidence interval for $\beta_1$ of ln(cp_new)~ln(hp), and we are 95% confident that the true slope falls within the interval of (1.64, 2.214). 
+
+We also made a confidence interval for the mean $log(cp_{new})$ at $hp = 40$, and we are 95% confident that the mean $log(cp_{new})$ value at $hp = 40$ falls within (5.41, 5.65) which corresponds to (223.6, 284.3) when back-transformed to regular cp_new units. We chose $hp = 40$ because it seemed to be the "central" value in our data. 
+
+Lastly, we made a prediction interval for an individual $log(cp_{new}$ at $hp=40$ , and this means that 95% of $log(cp_{new}$'s for Pokemon with $hp = 40$ falls within (4.44, 6.62). 
+
+We had an $R^2$ of 0.71 which means that 71% of the variabiity in $log(cp_{new})$ is explained by $log(hp)$ in our log-transformed model, $log(cp_{new}) \text{~} log(hp)$. Based on the residual plot, this current model of $cp_{new}$ vs $hp$ does not adequately describe the Eevee data points, which right now would be considered outliers in the current model. This linear model is not appropriate to be able to describe the Eevee population, and currently seems to only represent the subset of the 4 species of Pidgey, Caterpie, and Weedle. 
+
+# Conclusion
+Overall, log-transforming our original SLR, $cp_{new} \text{~} hp$ to $log(cp_{new}) \text{~} log(hp)$ improved the residual plot and better addressed the conditions necessary for inference of a linear regression model. We made 95% confidence intervals on the slope as well as the mean $cp_{new}$ at $hp = 40$ of our log-transformed model and a 95% prediction interval of individual $cp_{new}$ at $hp = 40$. What was interesting was that there seemed to be a really high correlation between $hp$ and $cp_{new}$, whereas in Part 1, when we did an exploratory analysis, for one of our plots involving another variable called power_up_stardust, at first glance, it looked to be almost a perfect correlation, with the exception of the Eevee data points. We weren't too surprised by the results of the data because after our explanatory analysis, we were expecting a good correlation between $hp$ and $cp_{new}$. 
+
+Moving forward, I wonder how adding other predictor variables will affect the fit of the model. In addition, is hp correlated with any other predictor variables within the data set? Lastly, what changes do we need to make to the model in order to better account for the Eevee data points? 
