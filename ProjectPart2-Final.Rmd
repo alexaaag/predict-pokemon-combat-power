@@ -1,7 +1,7 @@
 ---
 title: "Part 2: Simple Linear Regression"
 author: "Alex Gui and Lathan Liou"
-date: "2/9/2018"
+date: "Date Submitted: February 12, 2018"
 output: pdf_document
 ---
 
@@ -9,7 +9,6 @@ output: pdf_document
 knitr::opts_chunk$set(message=FALSE, warning=FALSE, fig.height=3, fig.width=8, fig.align = "center",tidy.opts=list(width.cutoff=60),tidy=TRUE)
 library(dplyr)
 library(ggplot2)
-library(infer)
 library(skimr)
 library(broom)
 library(readr)
@@ -21,7 +20,7 @@ pokemon <- read_csv("pokemon.csv")
 # Introduction
 Pokemon Go became an overnight sensation with hundreds of millions of people having downloaded the mobile game. The whole point of the game is to try to catch all the Pokemon available and train them (increase their combat power, or cp) so that you can battle other players with your strengthened Pokemon. A quick note about Pokemon is that they can evolve into stronger forms, so an evolved Pokemon will generally always have a higher cp than a non-evolved Pokemon. A number of people have tried to generate models in an attempt to predict the best way to maximize cp for their Pokemon. In other words, people have tried to generate models that most closely match how the game's algorithms and mechanics calculate cp in reality. This is what we will attempt to do ourselves: create a model to predict cp. In this segment of our project, we'll fit a simple regression model, regressing $cp\_new$, the combat power of the evolved Pokemon on $hp$, which is hit points, or the amount of health a Pokemon has. For some context, if $hp$ goes to 0, your Pokemon will faint, and you cannot battle with it anymore. Ideally, you'd like a Pokemon with a large amount of $hp$, so that it will take more hits to deplete it to 0. We decided to pick $hp$ as our predictor variable in our SLR because we think $hp$ could be an important predictor for $cp\_new$ given that having both high $hp$ and high $cp$ seem to grant Pokemon a distinct advantage over opponent Pokemon!
 
-To refresh your memory, the dataset we are looking at is an original data set collected by OpenIntro, most likely by some individual who was playing the game, Pokemon Go and who decided to record data. The dataset contains 75 observations across 26 variables, with each observation representing a randomly generated Pokemon that the gamer caught. Only 4 species are represented in this data, which is not representative of the entire Pokemon Go world, in which there are over 200 species and counting (depending on game developers' updates). 
+To refresh your memory, the dataset we are looking at is an original data set collected by $OpenIntro^1$, most likely by some individual who was playing the game, Pokemon Go and who decided to record data. The dataset contains 75 observations across 26 variables, with each observation representing a randomly generated Pokemon that the gamer caught. Only 4 species are represented in this data, which is not representative of the entire Pokemon Go world, in which there are over 200 species and counting (depending on game developers' updates). 
 
 You can follow our work here: https://github.com/alexaaag/math158-project.
 
@@ -37,8 +36,20 @@ Our null hypothesis is that there is no linear relationship between $cp\_new$ an
 pokemon_lm = lm (cp_new~hp,data=pokemon) 
 std=augment(pokemon_lm)$.std.resid
 fitted=augment(pokemon_lm)$.fitted
-p1<-ggplot(data=pokemon,aes(x=hp,y=cp_new))+geom_point()+ggtitle("Relationship Between cp_new and hp")+theme(plot.title = element_text(size = 9))
-p2<-ggplot(data=pokemon_lm,aes(x=fitted,y=std))+geom_point()+xlab("fitted")+ylab("standard residual")+geom_hline(yintercept = 0)+ggtitle("Standard Residual Plot")+theme(plot.title = element_text(size = 9))
+
+#plot
+p1 <- ggplot(data=pokemon,aes(x=hp,y=cp_new)) + 
+  geom_point() + 
+  ggtitle("Relationship Between cp_new and hp") + 
+  theme(plot.title = element_text(size = 9))
+
+#residual
+p2 <- ggplot(data=pokemon_lm,aes(x=fitted,y=std)) + 
+  geom_point()+xlab("fitted") + 
+  ylab("standard residual") + 
+  geom_hline(yintercept = 0)+ggtitle("Standard Residual Plot") + 
+  theme(plot.title = element_text(size = 9))
+
 grid.arrange(p1,p2,nrow=1,ncol=2,bottom="Figure 1: Plot of cp_new and hp")
 ```
 
@@ -50,9 +61,21 @@ Log transformation on both $cp\_new$ and $hp$:
 pokemon_lm_trans = lm(log(cp_new)~log(hp),data=pokemon) 
 std=augment(pokemon_lm_trans)$.std.resid
 fitted=augment(pokemon_lm_trans)$.fitted
-p1<-ggplot(pokemon,aes(x=log(hp),y=log(cp_new)))+geom_point()+ggtitle("Relationship between log(cp_new) and log(hp) ")+theme(plot.title = element_text(size = 9))
-p2 <-ggplot(pokemon_lm_trans,aes(x=fitted,y=std))+geom_point()+xlab("fitted")+ylab("standard residual")+geom_hline(yintercept = 0)+ggtitle("Residual Plot")+theme(plot.title = element_text(size = 9))
-grid.arrange(p1,p2,nrow=1,ncol=2,bottom="Figure 2: Plot of log transformation on both cp_new and hp")
+
+#plot
+p3 <- ggplot(pokemon,aes(x=log(hp),y=log(cp_new))) + 
+  geom_point() + 
+  ggtitle("Relationship between log(cp_new) and log(hp) ") + 
+  theme(plot.title = element_text(size = 9))
+
+#residual
+p2 <-ggplot(pokemon_lm_trans,aes(x=fitted,y=std))+geom_point() + 
+  xlab("fitted")+ylab("standard residual") + 
+  geom_hline(yintercept = 0)+ggtitle("Residual Plot") + 
+  theme(plot.title = element_text(size = 9))
+
+grid.arrange(p1,p2,nrow=1,ncol=2,bottom="Figure 2: Plot of log transformation 
+             on both cp_new and hp")
 ```
 
 # Inference
@@ -62,7 +85,9 @@ grid.arrange(p1,p2,nrow=1,ncol=2,bottom="Figure 2: Plot of log transformation on
 broom::tidy(pokemon_lm_trans,conf.int=TRUE,conf.level=0.95)
 ```
 
-## Mean and Prediction Interval
+We ran a confidence interval for $\beta_1$ of ln(cp_new)~ln(hp), and we are 95% confident that the true slope falls within the interval of (1.64, 2.214). 
+
+## Confidence Interval for Mean and Prediction Interval
 
 Mean interval and prediction interval of $\log(cp\_new)$ when $hp$ is 40.
 
@@ -73,21 +98,21 @@ pred <- augment(pokemon_lm_trans,newdata=val,type.predict = "response")
 .se.pred <- sqrt(glance(pokemon_lm_trans)$sigma^2+pred$.se.fit)
 
 pred <- pred %>%
-  mutate(lower_PI=.fitted-crit_val*.se.pred,upper_PI=.fitted+crit_val*.se.pred) 
+  mutate(lower_PI=.fitted-crit_val*.se.pred,
+         upper_PI=.fitted+crit_val*.se.pred, 
+         lower_CI=.fitted-crit_val*.se.fit,
+         upper_CI=.fitted-crit_val*.se.fit) 
 
 pred
 ```
-
-```{r}
-summary(pokemon_lm_trans)$r.squared
-```
-
-
-We ran a confidence interval for $\beta_1$ of ln(cp_new)~ln(hp), and we are 95% confident that the true slope falls within the interval of (1.64, 2.214). 
-
 We also made a confidence interval for the mean $log(cp\_new)$ at $hp = 40$, and we are 95% confident that the mean $log(cp\_new)$ value at $hp = 40$ falls within (5.41, 5.65) which corresponds to (223.6, 284.3) when back-transformed to regular cp_new units. We chose $hp = 40$ because it seemed to be the "central" value in our data. 
 
 Lastly, we made a prediction interval for an individual $log(cp\_new$ at $hp=40$ , and this means that 95% of $log(cp\_new$'s for Pokemon with $hp = 40$ falls within (4.44, 6.62). 
+
+## Determination of $R^2$
+```{r}
+summary(pokemon_lm_trans)$r.squared
+```
 
 We had an $R^2$ of 0.71 which means that 71% of the variability in $log(cp\_new)$ is explained by $log(hp)$ in our log-transformed model, $log(cp\_new) \text{~} log(hp)$. Based on the residual plot, this current model of $cp\_new$ vs $hp$ does not adequately describe the Eevee data points, which right now would be considered outliers in the current model. This linear model is not appropriate to be able to describe the Eevee population, and currently seems to only represent the subset of the 4 species of Pidgey, Caterpie, and Weedle. 
 
@@ -96,6 +121,12 @@ Overall, log-transforming our original SLR, $cp\_new \text{~} hp$ to $log(cp\_ne
 
 Moving forward, we wonder how adding other predictor variables will affect the fit of the model. In addition, is hp correlated with any other predictor variables within the data set? Lastly, what changes do we need to make to the model in order to better account for the Eevee data points? 
 
+\section{Sources}
 
+\begin{itemize}
 
+\item OpenIntro (https://www.openintro.org/stat/data/?data=pokemon). This is where downloaded the csv for our data.
 
+\item baptiste (https://stackoverflow.com/questions/30299529/ggplot2-define-plot-layout-with-grid-arrange-as-argument-of-do-call). How we make nicely arranged graphs. 
+
+\end{itemize}
