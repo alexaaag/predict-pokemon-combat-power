@@ -90,9 +90,9 @@ We ran a confidence interval for $\beta_1$ of ln(cp_new)~ln(hp), and we are 95% 
 
 \subsection{Mean Intervals and Prediction Intervals}
 
-Mean interval of $\log(cp\_new)$ when $hp$ is 40.
+We have hidden the code that generates the intervals for space efficiency. However if you're interested in the technical details, please visit our github repo!
 
-```{r}
+```{r,include =FALSE}
 #Unadjusted mean interval and prediction interval
 crit_val <- qt(.975,glance(pokemon_lm_trans)$df.resid)
 val <- data.frame(hp=c(40))
@@ -136,7 +136,7 @@ p5 <- ggplot(pred, aes(x=log.hp., y=log.cp_new.)) +
   stat_smooth(method = "lm", se = TRUE, fill = "darkolivegreen4") +
   geom_ribbon(data = pred, aes(ymin=lower_CI_bonf, ymax=upper_CI_bonf), fill = "darkolivegreen1", alpha = 0.2) + 
   geom_ribbon(data = pred, aes(ymin=lower_CI_WH, ymax=upper_CI_WH), fill = "gray36", alpha = 0.2) +
-  ggtitle("Mean Intervals") + 
+  ggtitle("Mean Intervals")  + xlab("log(hp)")+ylab("log(cp_new)")+
   theme(plot.title = element_text(size = 9))
 
 #calculate Scheffe stat
@@ -180,9 +180,11 @@ p6 <- ggplot(pred, aes(x=log.hp., y=log.cp_new.)) +
   geom_ribbon(data = pred, aes(ymin=lower_PI, ymax=upper_PI), fill = "darkolivegreen4", alpha = 0.2) + 
   geom_ribbon(data = pred, aes(ymin=lower_PI_bonf, ymax=upper_PI_bonf), fill = "darkolivegreen1", alpha = 0.2) + 
   geom_ribbon(data = pred, aes(ymin=lower_PI_S, ymax=upper_PI_S), fill = "gray36", alpha = 0.2) +
-  ggtitle("Prediction Intervals") + 
+  ggtitle("Prediction Intervals") + xlab("log(hp)")+ylab("log(cp_new)")+
   theme(plot.title = element_text(size = 9))
+```
 
+```{r}
 grid.arrange(p5,p6,nrow=1,ncol=2,bottom="Figure 3: Plots of Mean Intervals and Prediction Intervals")
 ```
 For our mean interval, we used three different methods to generate different bounds for our mean 95% confidence intervals: no adjustment, Bonferroni-adjusted, and Working-Hotelling-adjusted. The 95% confidence intervals are as follows for the mean $log(cp\_new)$ at $hp = 40$:
