@@ -28,7 +28,7 @@ You can follow our work here: https://github.com/alexaaag/math158-project.
 $$H_0: \beta_1 = 0$$ 
 $$H_a: \beta_1 > 0$$
 
-Our null hypothesis is that there is no linear relationship between $cp\_new$ and $hp$. The alternative hypothesis is there is a positive linear relationship between $cp\_new$ and $hp$. We pick a one-tail hypothesis because there is no negatively correlated variables observed in the exploratory analysis.
+Our null hypothesis is that there is no linear relationship between $cp\_new$ and $hp$. The alternative hypothesis is there is a positive linear relationship between $cp\_new$ and $hp$. We pick a one-tail hypothesis because there were no negatively correlated variables observed in the exploratory analysis.
 
 \section*{Checking Assumptions}
 
