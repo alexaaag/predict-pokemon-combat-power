@@ -42,20 +42,32 @@ The next thing we'll do is check relationships between our explanatory variables
 ```{r, include=FALSE}
 # Identify factor variables and convert to factor
 pokemon <- pokemon %>%
-  mutate(power_up_stardust) = as.numeric(power_up_candy) %>%
-  mutate(power_up_stardust_new) = as.numeric(power_up_stardust_new) %>%
+  mutate(power_up_stardust = as.numeric(power_up_candy) )%>%
+  mutate(power_up_stardust_new = as.numeric(power_up_stardust_new) )%>%
   mutate(power_up_candy = as.numeric(power_up_candy)) %>%
-  mutate(power_up_candy_new) = as.numeric(power_up_candy_new) %>%
+  mutate(power_up_candy_new = as.numeric(power_up_candy_new)) %>%
   mutate(attack_weak_value = as.numeric(attack_weak_value)) %>%
   mutate(attack_strong_value = as.numeric(attack_strong_value)) %>%
   mutate(attack_weak_value_new = as.numeric(attack_weak_value_new)) %>%
   mutate(attack_strong_value_new = as.numeric(attack_strong_value_new))
 
 #look at the correlation between continuous variables
-pokemon_cont <- pokemon %>%
-  select(cp, hp, weight, height, cp_new, hp_new, weight_new, height_new)
-chart.Correlation(pokemon_cont)
+#pokemon_cont <- pokemon %>%
+#  select(cp, hp, weight, height, cp_new, hp_new, weight_new, height_new)
+pokemon2 <- pokemon %>%
+  select(-name) 
 
+nums <- sapply(pokemon2, is.numeric)
+pokemon2<-pokemon2[,nums] 
+
+
+pokemon_cont<-pokemon2 %>%
+  select(-hp_new,-power_up_stardust_new,-attack_strong_value_new,-attack_weak_value_new,-weight_new,-height_new,-power_up_candy_new)
+```
+
+```{r}
+#chart.Correlation(pokemon_cont)
+require(GGally)
 #look at the correlation between categorical variables
 
 ```
