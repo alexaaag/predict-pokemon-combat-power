@@ -1,0 +1,124 @@
+---
+title: "Part 3: Multiple Linear Regression"
+author: "Alex Gui and Lathan Liou"
+date: "Date Submitted: March 26, 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message=FALSE, warning=FALSE, fig.height=3, fig.width=8, fig.align = "center",tidy.opts=list(width.cutoff=60),tidy=TRUE)
+library(dplyr)
+library(ggplot2)
+library(skimr)
+library(broom)
+library(readr)
+library(gridExtra)
+library(PerformanceAnalytics)
+library(jtools)
+options(digits=3)
+pokemon <- read_csv("pokemon.csv")
+```
+
+\section*{Introduction}
+Pokemon Go became an overnight sensation with hundreds of millions of people having downloaded the mobile game. The whole point of the game is to try to catch all the Pokemon available and train them (increase their combat power, abbreviated cp) so that you can battle other players with your strengthened Pokemon. A quick note about Pokemon is that they can evolve into stronger forms, so an evolved Pokemon will generally always have a higher cp than a non-evolved Pokemon. A number of people have tried to generate models in an attempt to predict the best way to maximize cp for their Pokemon. In other words, people have tried to generate models that most closely match how the game's algorithms and mechanics that calculate $cp$ in reality. This is what we will attempt to do ourselves: create a model to predict compat power. 
+
+% Discuss variables here
+
+regressing $cp\_new$, the combat power of the evolved Pokemon on $hp$, which is hit points, or the amount of health a Pokemon has. For some context, if $hp$ goes to 0, your Pokemon will faint, and you cannot battle with it anymore. Ideally, you'd like a Pokemon with a large amount of $hp$, so that it will take more hits to deplete it to 0. We decided to pick $hp$ as our predictor variable in our SLR because we think $hp$ could be an important predictor for $cp\_new$ given that having both high $hp$ and high $cp$ seem to grant Pokemon a distinct advantage over opponent Pokemon!
+
+To refresh your memory, the dataset we are looking at is an original data set collected by $OpenIntro^1$, most likely by some individual who was playing Pokemon Go and decided to record data. The dataset contains 75 observations across 26 variables, with each observation representing a randomly generated Pokemon that the gamer caught. Only 4 species are represented in this data, so the conclusions drawn from this modelling process will reflect the population of these 4 particular species: Eevee, Pidgey, Caterpie, and Weedle. 
+
+You can follow our work here: https://github.com/alexaaag/math158-project.
+
+\section*{Exploratory Analysis}
+
+The first thing we did was comb through my dataset again on the lookout for outliers and weird data. The first thing, which we hinted at in the last installment of this Pokemon Go regression project was that all the Eevee data points seemed to be outliers (their stats were way higher than the other Pokemons' stats). This makes me place in the back of my mind potentially removing the Eevee data points to see how the model performs.
+The second thing, which we didn't catch the first time around, was that for Weedle and Caterpie, their attack_strong_value was lower than the attack_weak_value. At first glance, this didn't make sense because the attack_strong_value should be _higher_ than the attack_weak_value. The name of the strong attack is "Struggle", and upon further research, we found that Struggle is actually the default second move. In other words Weedle and Caterpie don't have two attacks, one strong and one weak, but rather just a single attack. Even the attack_strong_new is Struggle. This makes me think to not include attack_strong variables in the model because Struggle, a game mechanic default move, is the Pokemon equivalent of an N/A that doesn't do much to predict how strong a pokemon might be. 
+
+The next thing we'll do is check relationships between our explanatory variables as well as between the explanatory and the response variable. 
+
+\subsection{Correlation Plots}
+
+```{r, include=FALSE}
+# Identify factor variables and convert to factor
+pokemon <- pokemon %>%
+  mutate(power_up_stardust) = as.numeric(power_up_candy) %>%
+  mutate(power_up_stardust_new) = as.numeric(power_up_stardust_new) %>%
+  mutate(power_up_candy = as.numeric(power_up_candy)) %>%
+  mutate(power_up_candy_new) = as.numeric(power_up_candy_new) %>%
+  mutate(attack_weak_value = as.numeric(attack_weak_value)) %>%
+  mutate(attack_strong_value = as.numeric(attack_strong_value)) %>%
+  mutate(attack_weak_value_new = as.numeric(attack_weak_value_new)) %>%
+  mutate(attack_strong_value_new = as.numeric(attack_strong_value_new))
+
+#look at the correlation between continuous variables
+pokemon_cont <- pokemon %>%
+  select(cp, hp, weight, height, cp_new, hp_new, weight_new, height_new)
+chart.Correlation(pokemon_cont)
+
+#look at the correlation between categorical variables
+
+```
+When looking at the pairs plots between continuous variables, several things stood out to me.
+\begin{enumerate}
+
+\item Cp_new is highly correlated with cp, hp, and hp_new. It's telling that cp is highly correlated with cp_new because that means that a pokemon with a higher starting cp can be expected to have a higher cp_new post-evolution.
+
+\item Hp is highly correlated with cp and hp_new. This makes me start to think about what should be included in the model. Perhaps both hp and hp_new don't have to be in the same model.
+
+\item Previously, we had log-transformed hp because there were issues of non-constant variance when plotted against cp_new. Looking at the pairs plots, there may be the same issues of non-constant variance with cp and hp_new, which will have to be checked with residual plots. However, one interesting thing that I'll explore later is potentially removing the Eevee data points, the ones that stick out very distinctly from the rest of the data. Eevees have naturally higher cp than the other species in this dataset. Removing the Eevee data points might actually resolve some of the issues of non-constant variance that I saw last time when I made residual plots of hp vs. cp_new.
+
+\end{enumerate}
+
+When looking at the pairs plots between categorical variables, several things stood out to me. 
+\begin{enumerate}
+
+\item While power_up_stardust and power_up_stardust_new as well as power_up_candy and power_up_candy_new are perfectly correlated, other "old vs. new" comparisons, such as attack_weak_value, are not. This indicates that the evolved or "new" version of a variable is not necessarily predicted by its pre-evolved or "old" version. Thus, we must consider each variable individually and carefully when deciding whether to include it in our final model or not.
+
+\item Power_up_stardust and power_up_candy are highly correlated as is attack_strong_value and attack_strong_value_new.
+
+\item The response, cp_new, is highly correlated with attack_strong_value, attack_strong_value_new, power_up_stardust, and power_up_stardust_new.
+
+\end{enumerate}
+
+\section*{Model Fitting}
+
+We are trying to build a linear regression model for predictive reasons. 
+
+```{r}
+qplot(x = hp, y = cp_new, color = species, data = pokemon) + 
+  geom_smooth(method = "lm")
+```
+
+Since our last installment working on this data project, one of the things we noticed was that the cp_new vs hp model did not adequately describe the Eevee data points. Here, we decided to color by species, and from this plot, it's clear that species interacts with hp in predicting cp_new (the slopes are different). In other words, the effect of hp on cp_new depends on the species of Pokemon. 
+
+Based on layman knowledge of the game, it would make sense that these effects change by species since some species are naturally stronger or weaker (Eevee is a mystical mammal while Caterpie and Weedle are essentially your everyday garden worms).
+
+Thus, in the model building process outlined in the next section, we've decided on certain terms to interact with species. 
+
+\subsection{Training and Validation}
+
+```{r}
+#step.lm <- step(lm(cp_new~1, data = pokemon), cp_new ~ cp*species + hp*species + weight*species + height + power_up_stardust + power_up_candy + attack_weak_value*species + attack_strong_value*species + hp_new*species + weight_new*species + height_new + power_up_stardust_new + power_up_candy_new + attack_weak_value_new*species + attack_strong_value_new*species, direction = "both")
+```
+
+\subsection{Interpreting betas}
+
+\subsection{$R^2$ and $R^2_{adj}$}
+```{r}
+
+```
+
+\subsection{Coefficient of Partial Determination}
+
+\subsection{Residuals and Influence points}
+
+\subsection{F-test Inference}
+
+\subsection{What does this model mean?}
+
+\section*{Confidence and Prediction Intervals}
+
+\section*{A Brief Aside}
+
+\section*{Conclusion}
