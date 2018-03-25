@@ -37,9 +37,6 @@ The next thing we'll do is check relationships between our explanatory variables
 
 \subsection{Correlation Plots}
 
-```{r, include=FALSE}
-
-```
 When looking at the pairs plots between continuous variables, several things stood out to us.
 \begin{enumerate}
 
