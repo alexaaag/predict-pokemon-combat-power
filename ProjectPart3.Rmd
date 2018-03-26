@@ -15,174 +15,183 @@ library(readr)
 library(gridExtra)
 library(PerformanceAnalytics)
 library(jtools)
+library(GGally)
 options(digits=3)
 pokemon <- read_csv("pokemon.csv")
 ```
 
 \section*{Introduction}
-Pokemon Go became an overnight sensation with hundreds of millions of people having downloaded the mobile game. The whole point of the game is to try to catch all the Pokemon available and train them (increase their combat power, abbreviated cp) so that you can battle other players with your strengthened Pokemon. A quick note about Pokemon is that they can evolve into stronger forms, so an evolved Pokemon will generally always have a higher cp than a non-evolved Pokemon. A number of people have tried to generate models in an attempt to predict the best way to maximize cp for their Pokemon. This is what we will attempt to do ourselves: create a model to predict combat power. 
+Pokemon Go became an overnight sensation with hundreds of millions of people having downloaded the mobile game. The whole point of the game is to try to catch all the Pokemon available and train them (increase their combat power, which is abbreviated cp) so that you can battle other players with your strengthened Pokemon. A quick note about Pokemon is that they can evolve into stronger forms, so an evolved Pokemon will generally always have a higher cp than a non-evolved Pokemon. A number of people have tried to generate models in an attempt to predict the best way to maximize cp for their Pokemon. This is what we will attempt to do ourselves: create a model to predict combat power for an evolved Pokemon. 
 
-To refresh your memory, the dataset we are looking at is an original data set collected by $OpenIntro^1$, most likely by some individual who was playing Pokemon Go and decided to record data. The dataset contains 75 observations across 26 variables, with each observation representing a randomly generated Pokemon that the gamer caught. Only 4 species are represented in this data, so the conclusions drawn from this modeling process will reflect the population of these 4 particular species: Eevee, Pidgey, Caterpie, and Weedle. 
+To refresh your memory, the dataset we are looking at is an original data set collected by $OpenIntro^1$, most likely by some individual who was playing Pokemon Go and decided to record data. The dataset contains 75 observations across 26 variables, with each observation representing a randomly generated Pokemon that the gamer caught. Four species are represented in this data, so the conclusions drawn from this modeling process will reflect the population of these 4 particular species: Eevee, Pidgey, Caterpie, and Weedle. 
 
-We avoid using "new" variables because as a user, you wouldn't have access to any of the "new" information, but if you're interested in whether your pokemon will evolve into one with a high cp (cp_new), you want to see which of the Pokemon's current stats can predict a high cp_new. The variables that we'd like to focus on are cp, hp, and power_up_stardust. Our intuition is that a pokemon with a higher cp might evolve into a pokemon with a higher cp. Hp, or hit points, refers to the amount of damage a Pokemon can sustain in battle before fainting. It would be interesting to see whether a Pokemon with high hp will also have high cp. Power up stardust is used to raise cp of the pokemon, but the catch here is we don't know the ideal amount of power up stardust to max out the cp_new of the evolved pokemon. 
+We avoid using "new" variables in our modeling process because as a user, you wouldn't have access to any of the "new" information, but if you're interested in whether your pokemon will evolve into one with a high cp ($cp_{new}$), you would want to know which of the Pokemon's current stats can indicate a high $cp_{new}$. The variables that we'd like to focus on are cp, hp, and power_up_stardust. Our intuition is that a pokemon with a higher cp might evolve into a pokemon with a higher cp. Hp, or hit points, refers to the amount of damage a Pokemon can sustain in battle before fainting. It would be interesting to see whether a Pokemon with high hp will also have high cp. Power up stardust is used to raise cp of the pokemon, but the catch here is we don't know the ideal amount of power up stardust to max out the $cp_{new}$ of the evolved pokemon. 
 
 You can follow our work here: https://github.com/alexaaag/math158-project.
 
 \section*{Exploratory Analysis}
 
-The first thing we did was comb through my dataset again on the lookout for outliers and weird data. The first thing, which we hinted at in the last installment of this Pokemon Go regression project was that all the Eevee data points seemed to be outliers (their stats were way higher than the other Pokemons' stats). This makes me place in the back of my mind potentially removing the Eevee data points to see how the model performs.
-The second thing, which we didn't catch the first time around, was that for Weedle and Caterpie, their attack_strong_value was lower than the attack_weak_value. At first glance, this didn't make sense because the attack_strong_value should be _higher_ than the attack_weak_value. The name of the strong attack is "Struggle", and upon further research, we found that Struggle is actually the default second move. In other words Weedle and Caterpie don't have two attacks, one strong and one weak, but rather just a single attack. We will still choose to use attack_strong_value during our model fitting process because it might contain information important for predictions. 
+The first thing we did was comb through the dataset again to spot any outliers or weird data. As we hinted towards in Part II of our Pokemon Go regression project, all the Eevee data points seem to be outliers (their stats were way higher than the other Pokemons' stats). A question will we look into is what will the model look like if the Eevee outliers are removed. 
 
-The next thing we'll do is check relationships between our explanatory variables as well as between the explanatory and the response variable. 
+The second thing, which we didn't catch the first time around, was that for Weedle and Caterpie, their $attack\_strong\_value$ was lower than the $attack\_weak\_value.$ At first glance, this didn't make sense because the $attack\_strong\_value$ should be _higher_ than the $attack\_weak\_value.$ The name of the strong attack is "Struggle", and upon further research, we found that Struggle is actually the default second move. In other words Weedle and Caterpie don't have two attacks, one strong and one weak, but rather just a single attack. We still chose to include $attack\_strong\_value$ in our model fitting process because it might contain information important for predictions. 
+
+The next thing we did was check the relationships between our explanatory variables as well as between the explanatory variables and the response variable. 
 
 \subsection{Correlation Plots}
-
-```{r, include=FALSE}
-<<<<<<< HEAD
-=======
-# Identify factor variables and convert to factor
-pokemon <- pokemon %>%
-  mutate(power_up_stardust = as.numeric(power_up_candy) )%>%
-  mutate(power_up_stardust_new = as.numeric(power_up_stardust_new) )%>%
-  mutate(power_up_candy = as.numeric(power_up_candy)) %>%
-  mutate(power_up_candy_new = as.numeric(power_up_candy_new)) %>%
-  mutate(attack_weak_value = as.numeric(attack_weak_value)) %>%
-  mutate(attack_strong_value = as.numeric(attack_strong_value)) %>%
-  mutate(attack_weak_value_new = as.numeric(attack_weak_value_new)) %>%
-  mutate(attack_strong_value_new = as.numeric(attack_strong_value_new))
-
-#look at the correlation between continuous variables
-#pokemon_cont <- pokemon %>%
-#  select(cp, hp, weight, height, cp_new, hp_new, weight_new, height_new)
-pokemon2 <- pokemon %>%
-  select(-name) 
-
-nums <- sapply(pokemon2, is.numeric)
-pokemon2<-pokemon2[,nums] 
-
-
-pokemon_cont<-pokemon2 %>%
-  select(-hp_new,-power_up_stardust_new,-attack_strong_value_new,-attack_weak_value_new,-weight_new,-height_new,-power_up_candy_new)
+```{r,include=FALSE}
+pokemon2<-pokemon %>%
+  select(cp_new,cp,species,hp,weight,attack_strong_value,power_up_stardust)
 ```
 
-```{r}
-#chart.Correlation(pokemon_cont)
-require(GGally)
-#look at the correlation between categorical variables
->>>>>>> 3e6c5decc5d9711d976300c5b51e4fa46d995053
-
+```{r,fig.height=8,fig.width=13}
+ggpairs(pokemon2,aes(col=species))
 ```
-When looking at the pairs plots between continuous variables, several things stood out to us.
+Here, we've only included certain variables for ease of presentation; however, you can see the full correlation plot on our GitHub. When looking at the pairs plots between continuous variables, several things stood out to us.
 \begin{enumerate}
 
-\item $Cp_new$ is highly correlated with cp and hp. It's telling that cp is highly correlated with $cp_new$ because that means that a pokemon with a higher starting cp can be expected to have a higher $cp_new$ post-evolution.
+\item $cp_{new}$ is highly correlated with cp and hp. It's telling that cp is highly correlated with $cp_{new}$ because that means that a pokemon with a higher starting cp can be expected to have a higher $cp_{new}$ post-evolution.
 
 \item Cp is highly correlated with hp, so perhaps we don't need both in the model if we are looking for a more parsimonious model. Although, since we are trying to fit a predictive model, maybe having more predictor variables might be to our benefit (more variability explained)
 
-\item Previously, we had log-transformed hp because there were issues of non-constant variance when plotted against $cp_new$. Looking at the pairs plots, there may be the same issues of non-constant variance with cp and $hp_new$, which will have to be checked with residual plots. However, one interesting thing that I'll explore later is potentially removing the Eevee data points, the ones that stick out very distinctly from the rest of the data. Eevees have naturally higher cp than the other species in this dataset. Removing the Eevee data points might actually resolve some of the issues of non-constant variance that we saw last time when I made residual plots of hp vs. $cp_new$.
+\item Previously, we had log-transformed hp because there were issues of non-constant variance when plotted against $cp_{new}$. Looking at the pairs plots, there may be the same issues of non-constant variance with cp and $hp_new$, which will have to be checked with residual plots. 
 
 \end{enumerate}
 
-\section*{Model Fitting}
+\section*{Model Building}
+```{r,include=FALSE}
+pokemon_model<-pokemon %>%
+  select(-name,-notes) %>%
+  select(-hp_new,-power_up_stardust_new,-attack_strong_value_new,-attack_weak_value_new,-weight_new,-height_new,-power_up_candy_new,-attack_strong_type_new,-attack_weak_type_new,-attack_strong_new,-attack_weak_new) %>%
+  select(-attack_strong_type,-attack_weak_type,-attack_strong,-attack_weak)
+```
+
+
+\subsection{Note on Interactions}
 
 ```{r}
-qplot(x = hp, y = cp_new, color = species, data = pokemon) + 
+p1 <- qplot(x = hp, y = cp_new, color = species, data = pokemon) + 
   geom_smooth(method = "lm")
+grid.arrange(p1, nrow=1,ncol=1 ,bottom="Figure 1: Plot of hp vs. cp_new demonstrating interaction by species")
 ```
 
-Since our last installment working on this data project, one of the things we noticed was that the cp_new vs hp model did not adequately describe the Eevee data points. Here, we decided to color by species, and from this plot, it's clear that species interacts with hp in predicting cp_new (the slopes are different). In other words, the effect of hp on cp_new depends on the species of Pokemon. 
+Since our last installment working on this data project, one of the things we noticed was that the $cp_{new}$ vs hp model did not adequately describe the Eevee data points. Here, we decided to color by species, and from this plot (Figure 1), it's clear that species interacts with hp in predicting $cp_{new}$ (the slopes are different). In other words, the effect of hp on $cp_{new}$ depends on the species of Pokemon. 
 
-Based on layman knowledge of the game, it would make sense that these effects change by species since some species are naturally stronger or weaker (Eevee is a mystical mammal while Caterpie and Weedle are essentially your everyday garden worms).
+Based on layman knowledge of the game, it would make sense that these effects change by species since some species are naturally stronger or weaker (Eevee is a mystical mammal while Caterpie and Weedle are essentially your everyday garden worms in the Pokemon universe).
 
-Thus, in the model building process outlined in the next section, we've decided on certain terms to interact with species. 
-
-\subsection{Running Regressions}
-
-```{r}
-
-```
-
-We first split our data into training and test sets. The training set will be used to estimate the model. The test set is used to test if our model is able to predict on a new population. We first used best subsets regression and identified the best Cp (not to get confused with combat power!), best BIC and best adjusted R-squared models, which were all the same model. We then ran a stepwise regression, specifying both directions, and we obtained the same model as for best subsets!
-We then wanted to experiment with adding species as an interaction term. 
-
-\subsection{F-test Inference}
-
-We ran an F-test to see whether more interaction terms would significantly contribute to the model. We have a significant F-value of 7.4e-5, which means we reject the null hypothesis (that the new betas are 0), and conclude that including the interaction terms are important for predictions of cp_new. 
+Thus, in the model building process outlined below, we've decided to provide the algorithms with the choice of including interaction terms.  
 
 \subsection{Model Selection}
-The selection criteria that we used were AIC, $R^2$, $R^2_{adj}$, and F-value.  
 
-The model we chose was: cp_new ~ cp + species + attack_strong_value + weight + cp:species + species:attack_strong_value + species:weight
+We tried different model building procedures, specifically best subsets and forward and backward stepwise regression. Briefly, best subsets looks at all combinations of predictors and picks the best based on the following criteria that we chose: BIC, $R^2_adj$, and Mallow's $C_p$ and stepwise regression starts with an empty model and adds the best available variable to the model at each step making sure to drop variables that become less important as the model selection process moves forward. 
 
-AIC=474.87
+We feed the algorithm with all variables including interaction terms. The best model from this round of selection was: $cp_{new}$ ~ cp + species + $attack\_strong\_value$ + weight + cp:species + species:$attack\_strong\_value$ + species:weight which resulted from stepwise regression. The selection criteria we used were AIC, $R^2$, and $R^2_{adj}$. 
 
-F-value of 7.4e-5
-
-\subsection{Diagnostics: Residuals and Influence points}
-```{r}
+\subsection{Diagnostics}
+\subsubsection{Residuals}
+```{r,include=FALSE}
 lm1 <- lm(cp_new ~ cp + species + attack_strong_value + weight + cp:species + species:attack_strong_value + species:weight, data = pokemon)
 res1 <- resid(lm1)
+```
 
+```{r, include = FALSE}
 plot(pokemon$cp_new, res1, ylab="Residuals", xlab="Cp_new", main="Pokemon Cp_new") 
 abline(0, 0) 
-
-pokemon2 <- pokemon %>%
-  filter(!species =="Eevee")
-lm2 <- lm(cp_new ~ cp + species + attack_strong_value + weight + cp:species + species:attack_strong_value + species:weight, data = pokemon2)
-res2 <- resid(lm2)
-
-plot(pokemon2$cp_new, res2, ylab="Residuals", xlab="Cp_new", main="Pokemon Cp_new") 
-abline(0, 0) 
-
-lm3 <- lm(log(cp_new) ~ log(cp) + species + attack_strong_value + weight + cp:species + species:attack_strong_value + species:weight, data = pokemon2)
-res3 <- resid(lm3)
-
-plot(pokemon2$cp_new, res3, ylab="Residuals", xlab="Cp_new", main="Pokemon Cp_new") 
-abline(0, 0) 
 ```
-First we ran a residual plot on our intial model cp_new ~ cp + species + attack_strong_value + weight + cp:species + species:attack_strong_value + species:weight. We observed 6 points that were clearly different from the bulk of the points in the residual points, which corresponded to the Eevees, so we decided to remove the Eevee points to see what the residual plot would look like afterwards. The residual plot looked better, but we still saw issues with heteroscedasticity, or unequal variance, so we decided to log-transform our response variable as well as cp, since we noticed that cp had a wide range of values during our exploratory analysis. As a result, our log-transformed values resulted in the "random scatter" that we love seeing in residual plots. 
 
-We ran a Bonferonni test procedure to see if we had outlying Y residuals, those whose studentized deleted residuals were large in absolute value. We also ran diagnostic tests to look for influential points. We ran a test of DFFITS, which is the measure of the influence pokemon i has on model-fitted cp_new. From DFFITS, we saw that all the Eevees had influence on the model-fitted cp_new. We also ran a test of DFBETAS, which is the measure of influence pokemon i has on $k^{th}$ regression coefficient. From DFBETAS, we saw that none of the data points had influence on the regression coefficient. Furthermore, we ran a test of Cook's Distance, which is the measure in change in regression by removing each individual point. From Cook's Distance, we saw that 4 of the Eevees had influence on the regression line. Lastly, we ran a VIF test, but we ran into an "aliased coefficients" error which probably indicated that our model was highly multicollinear such that VIF was essentially undefined. 
+```{r,include=FALSE}
+pokemon_logged <- pokemon_model %>%
+  mutate(cp_new=log(cp_new),cp=log(cp))
+names(pokemon_logged)[2] <- c("cp_log")
+names(pokemon_logged)[10] <- c("cp_new_log")
+
+lm2 <- lm(cp_new_log ~ cp_log + species + attack_strong_value + weight + cp_log:species + species:attack_strong_value + species:weight, data = pokemon_logged)
+res2 <- resid(lm2)
+```
+
+```{r}
+p2 <- ggplot(data = pokemon_logged, aes(x = cp_new_log, y = res2), ylab="Residuals", xlab="Cp_new", title="Pokemon Cp_new") + geom_point() + 
+  geom_hline(yintercept=0, linetype = "solid")
+grid.arrange(p2,nrow=1,ncol=1,bottom="Figure 2: Residual Plot of Logged Model")
+```
+
+We created a residual plot on our first round model $cp_{new}$ ~ cp + species + $attack\_strong\_value$ + weight + cp:species + species:$attack\_strong\_value$ + species:weight. We observed unequal and non-normal variance which corresponded to the Eevees and issues with heteroscedasticity, so we decided to log-transform $cp_{new}$ as well as cp, since we noticed that cp had a wide range of values during our exploratory analysis. As a result, our log-transformed values resulted in the "random scatter" that we love seeing in residual plots (Figure 2). Having log-transformed variables will improve our model appropriateness.
+
+\subsubsection{Outliers and Influential Points}
+We ran a Bonferonni test procedure to see if we had outlying Y residuals, those whose studentized deleted residuals were large in absolute value. We also ran diagnostic tests to look for influential points. We ran a test of DFFITS, which is the measure of the influence pokemon $i$ has on model-fitted $cp_{new}$. From DFFITS, we saw that all the Eevees had influence on the model-fitted $cp_{new}$. We also ran a test of DFBETAS, which is the measure of influence pokemon i has on $k^{th}$ regression coefficient. From DFBETAS, we saw that none of the data points had influence on the regression coefficient. Furthermore, we ran a test of Cook's Distance, which is the measure in change in regression by removing each individual point. From Cook's Distance, we saw that 4 of the Eevees had influence on the regression line. Lastly, we ran a VIF test, but we ran into an "aliased coefficients" error which indicated that our model was highly multicollinear such that VIF was essentially undefined. 
+
+\subsection{Revisiting Model Selection and Diagnostics} 
+We re-ran our model selection process on log-transformed $cp\_new$ and $cp$ (renamed in our dataset as $cp\_new\_log$ and $cp\_new$ respectively) which we discovered were necessary for inference from our residual plots. The resulting optimal model including interaction terms was $cp\_new\_log$ ~ $cp\_log$ + $species$ + $attack\_strong\_value$ + $hp$ + $power\_up\_candy$ + $species:hp$ + $cp\_log:species$ + $species:power\_up\_candy$ + $species:attack\_strong\_value$. The AIC was -509 and the $R^2$ and adjusted $R^2$ were both 0.999. However, after running a VIF test, we encountered the same "aliased coefficients" error which resulted from the large number of interaction terms included in the model. Therefore, the "aliased coefficients" error indicated that our model was highly multicollinear such that VIF was essentially undefined. This led us to question if interaction terms should be eliminated to obtain a more interpretable model while not sacrificing the model's predictive power. Therefore, we re-ran the selection process excluding the interaction terms. The new best model is $cp\_new\_log$ ~ $cp\_log$ + $species$ + $attack\_strong\_value$ + $hp$ + $weight$ with AIC of -502 and 
+$R^2$ and adjusted $R^2$ of 0.999. The mean VIF of this model is 4.68.
+
+We have strong reason to believe that we should choose the reduced model which has no interaction terms since it has a similar AIC score and equally high $R^2$ and adjusted $R^2$ as the full model with interaction terms. Yet the reduced model is not multicollinear and is easier to be interpreted. A residual plot of this model also shows that the technical conditions for inference were satisfied. We thus selected $cp\_new\_log$ ~ $cp\_log$ + $species$ + $attack\_strong\_value$ + $hp$ + $weight$ as our final model.
 
 \subsection{Interpreting Betas and the Model Overall}
-Following our diagnostic procedures, we decided to review the model building process. Just for thoroughness's sake, we reran our model building steps, such as best subsets and stepwise regression, for a dataset from which we removed the Eevees. The best resulting model was cp_new ~ cp + species + power_up_stardust, which came from best subsets lowest BIC. This is interesting because without the Eevees, we obtain a much more parsimonious model that also has a high $R^2$.  
+Just as a quick aside, we wondered what the model would look like in a dataset without Eevees, so we ran the same model selection steps. While we won't describe it here, feel free to check it out on our GitHub!  
 
-However, because there was no objective reason to remove the Eevees, we kept them in and revisited the model selection process one last time, this time incorporating the log transformations of cp_new and cp that we discovered were beneficial from our residual plots. The final model we obtained was log(cp_new) ~ log(cp) + species + attack_strong_value + hp + weight. The AIC for this model was -502. We didn't choose the model with the species interaction term because the model was way overfitted, and we didn't think it necessary when the non-interacting model had just as high an $R^2$. The $R^2$ was 0.999 which meant that 99.9% of the variability in cp_new was explained by the model, indicating a high model fit. The $R^2_{adj}$ is 0.999. However, keep in mind that a high $R^2$ is not a valid indication of whether the model will accurately describe the population because you can get a huge $R^2$ from a few influential points. 
+When we performed a nested F-test between the final model that we chose and our full model with all interaction terms, we obtained a p-value of 0.003, indicating that we reject $H_0$ that all the $\beta$'s of the additional variables in the full model (namely, the betas of the interaction terms) equal 0, and conclude that at least one of the coefficients was significantly nonzero. However, we decided not to select the interaction model for reasons of overfitting that we've discussed above.
 
-When we performed a nested F-test between the final model that we chose and a bigger model including interaction terms, we got a p-value of 0.003, indicating that the bigger model with the additional variables were significantly nonzero. However, we decided not to select the interaction model for reasons of overfitting that we've discussed above.
+\begin{enumerate}
 
-When looking at the $\beta$ coefficients in our final model, we'll report the interesting ones we noticed. Holding all other variables constant, a doubling of $cp$ is associated with a multiplicative change of $2^{1.04}$ in median of $cp_{new}$, and this is extremely significant, meaning that we reject $H_0$ that $\beta_{cp}=0$. 
+\item Holding all other variables constant, a doubling of $cp$ is associated with a multiplicative change of $2^{1.04}$ in the median of $cp_{new}$, and this is extremely significant, meaning that we reject $H_0$ that $\beta_{cp}=0$. 
+
+\item Holding all other variables constant, having an Eevee is associated with a multiplicative change of $e^{0.992}$ in the median of $cp_{new}$, and this is extremely significant, meaning that we reject $H_0$ that $\beta_{speciesEevee}=0$. 
+
+\item Holding all other variables constant, having a Pidgey is associated with a multiplicative change of $e^{0.591}$ in the median of $cp_{new}$, and this is extremely significant, meaning that we reject $H_0$ that $\beta_{speciesPidgey}=0$. 
+
+\item Holding all other variables constant, having a Weedle is associated with a multiplicative change of $e^{0.0177}$ in the median of $cp_{new}$, and this is not significant, meaning that we fail to reject $H_0$ that $\beta_{speciesWeedle}=0$.
+
+\item Holding all other variables constant, an increase in $attack\_strong\_value$ of 1 unit is associated with a multiplicative change of $e^{-0.00456}$ in the median of $cp_{new}$, and this is extremely significant, meaning that we reject $H_0$ that $\beta_{attack\_strong\_value}=0$. 
+
+\item Holding all other variables constant, an increase in $hp$ of 1 unit is associated with a multiplicative change of $e^{-0.00197}$ in the median of $cp_{new}$, and this is significant, meaning that we reject $H_0$ that $\beta_{hp}=0$. 
+
+\item Holding all other variables constant, an increase in $weight$ of 1 unit is associated with a multiplicative change of $e^{-0.000604}$ in the median of $cp_{new}$, and this is not significant, meaning that we fail to reject $H_0$ that $\beta_{attack\_strong\_value}=0$. 
+
+\end{enumerate}
+
+Lastly, our diagnostics still indicate that Eevees are influential, so it is important to note that out model could look very different if there were no Eevees in he data. Our mean VIF was 4.68, indicating no serious issues of multicollinearity. 
+
+```{r, include=FALSE}
+final.model<-lm(cp_new_log ~ cp_log + species + attack_strong_value + 
+    hp + weight, data = pokemon_logged)
+summary(final.model)
+```
 
 \subsection{Coefficient of Partial Determination}
 
 \begin{enumerate}
 
-\item $R^2_{Y cp|species, attack_strong_value, hp, weight}$
-The variability in cp_new remaining after modeling cp_new using species, attack_strong_value, hp, and weight, is reduced by a further 99% when additionally adding cp to the model. 
+\item $R^2_{Y cp|species, attack\_strong\_value, hp, weight}$
+The variability in $cp_{new}$ remaining after modeling $cp_{new}$ using species, $attack\_strong\_value$, hp, and weight, is reduced by a further 99% when additionally adding cp to the model. 
 
-\item $R^2_{Y species|cp, attack_strong_value, hp, weight}$
-The variability in cp_new remaining after modeling cp_new using cp, attack_strong_value, hp, and weight, is reduced by a further 96.1% when additionally adding species to the model.
+\item $R^2_{Y species|cp, attack\_strong\_value, hp, weight}$
+The variability in $cp_{new}$ remaining after modeling $cp_{new}$ using cp, $attack\_strong\_value$, hp, and weight, is reduced by a further 96.1% when additionally adding species to the model.
 
-\item $R^2_{Y attack_strong_value|cp, species, hp, weight}$
-The variability in cp_new remaining after modeling cp_new using cp, species, hp, and weight, is reduced by a further 31.2% when additionally adding attack_strong_value to the model.
+\item $R^2_{Y attack\_strong\_value|cp, species, hp, weight}$
+The variability in $cp_{new}$ remaining after modeling $cp_{new}$ using cp, species, hp, and weight, is reduced by a further 31.2% when additionally adding $attack\_strong\_value$ to the model.
 
-\item $R^2_{Y hp|cp, species, attack_strong_value, weight}$
-The variability in cp_new remaining after modeling cp_new using cp, species, attack_strong_value, and weight, is reduced by a further 7.67% when additionally adding species to the model.
+\item $R^2_{Y hp|cp, species, attack\_strong\_value, weight}$
+The variability in $cp_{new}$ remaining after modeling $cp_{new}$ using cp, species, $attack\_strong\_value$, and weight, is reduced by a further 7.67% when additionally adding species to the model.
 
-\item $R^2_{Y weight|cp, species, attack_strong_value, hp}$
-The variability in cp_new remaining after modeling cp_new using cp, attack_strong_value, hp, and weight, is reduced by a further 2.83% when additionally adding species to the model.
+\item $R^2_{Y weight|cp, species, attack\_strong\_value, hp}$
+The variability in $cp_{new}$ remaining after modeling $cp_{new}$ using cp, attack\_strong\_value, hp, and weight, is reduced by a further 2.83% when additionally adding species to the model.
+
+\end{enumerate}
 
 From this analysis, we see that cp and species are by far the more important variables in the model. The other variables do contribute to the reduction in variability. 
 
 \section*{Confidence and Prediction Intervals}
-We are 95% confident that the median cp_new for a Pidgey with cp = $e^{5.3}$, attack_strong_value of 25, hp of 41, and weight of 3 is be between $e^{5.92}$ and $e^{5.95}$. 
+After we selected our model, we wanted to see it's prediction ability, so we generated a prediction interval for an individual Pidgey with characteristics we arbitrarily chose. 95% of all Pidgeys with cp = $e^{5.3}$, $attack\_strong\_value$ of 25, hp of 41, and weight of 3 have $cp_{new}$ between $e^{5.75}$ and $e^{6.13}$.
 
-95% of all Pidgeys with cp = $e^{5.3}$, attack_strong_value of 25, hp of 41, and weight of 3 have cp_new between $e^{5.75}$ and $e^{6.13}$.
+In addition to prediction, we were also interested in inference, that is, finding a confidence interval. For the same set of characteristics, we are 95% confident that the median $cp_{new}$ for a Pidgey with cp = $e^{5.3}$, $attack\_strong\_value$ of 25, hp of 41, and weight of 3 is be between $e^{5.92}$ and $e^{5.95}$. 
 
-\section*{A Brief Aside}
-We ran 8 hypothesis test: the nested F-test that we performed on our final model and the t-tests for each of the $\beta$ coefficients. Thus, our p-values would just be our p-values, and we don't have to make any Bonferonni adjustments. 
+
+\section*{A Brief Aside on p-values}
+We ran 8 hypothesis tests: the nested F-test that we performed on our final model and the t-tests for each of the $\beta$ coefficients. Our p-values would be multipled by 8, which would not have changed the magnitude of any of the significances of our p-values.
 
 \section*{Conclusion}
+The final model we selected was $cp\_new\_log$ ~ $cp\_log$ + species + $attack\_strong\_value$ + $hp$ + $weight$, which was generated from a stepwise linear regression, based on several criteria: AIC, $R^2$, and $R^2_adj$ as well as a guiding principle of avoiding overfitting without compromising the model's highest predictive potential. Although we saw hp and cp to correlated during our exploratory analysis, there were no serious issues of multicollinearity. We were not surprised by the huge importance that cp and species had in explaining the variability of $cp_{new}$. We were surprised that weight was kept in the model since it didn't explain a lot of variability in $cp_{new}$; however, given that we are attempting to generate primarily a predictive model, including weight, which provide extra predictive information, is in our best interests.
+
+Overall, we think our model is informative in that it guides Pokemon Go players to focus on specific aspects of their Pokemon to be able to get a sense of whether their evolved Pokemon will have a high cp. 
 
 \section{Sources}
 
@@ -195,4 +204,3 @@ We ran 8 hypothesis test: the nested F-test that we performed on our final model
 \item sape research group (http://sape.inf.usi.ch/quick-reference/ggplot2/colour) Colors for ggplot are great
 
 \end{itemize}
-
