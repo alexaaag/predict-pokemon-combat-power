@@ -371,5 +371,36 @@ pred
 ```
 
 
+## CV error
+```{r}
+stepwise.lm.final
+```
 
+```{r}
+stepwise.lm.full2
+```
+
+```{r}
+library(caret)
+model <- train( cp_new_log ~ cp_log + species + attack_strong_value + 
+    hp + weight, data = pokemon_logged,
+method = "lm",
+trControl = trainControl(
+method = "cv", number = 10,
+)
+)
+print(model)
+```
+
+```{r}
+model2 <- train( cp_new_log ~ cp_log + species + attack_strong_value + 
+    hp + power_up_candy + species:hp + cp_log:species + species:power_up_candy + 
+    species:attack_strong_value, data = pokemon_logged,
+method = "lm",
+trControl = trainControl(
+method = "cv", number = 10,
+)
+)
+print(model2)
+```
 
