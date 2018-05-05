@@ -1,0 +1,328 @@
+---
+title: "Part 4: Final Report"
+author: "Alex Gui and Lathan Liou"
+date: "Date Submitted: "
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message=FALSE, warning=FALSE, fig.height=3, fig.width=8, fig.align = "center",tidy.opts=list(width.cutoff=60),tidy=TRUE)
+library(dplyr)
+library(ggplot2)
+library(skimr)
+library(broom)
+library(readr)
+library(gridExtra)
+library(GGally)
+library(glmnet)
+library(tidyr)
+library(splines)
+options(digits=3)
+pokemon <- read_csv("pokemon.csv")
+
+pokemon_model1<-pokemon %>%
+  select(-name,-notes) %>%
+  select(-hp_new,-power_up_stardust_new,-attack_strong_value_new,-attack_weak_value_new,-weight_new,-height_new,-power_up_candy_new,-attack_strong_type_new,-attack_weak_type_new,-attack_strong_new,-attack_weak_new) %>%
+  mutate(attack_strong_type = as.factor(attack_strong_type),
+         attack_weak_type = as.numeric(as.factor(attack_weak_type)),
+         attack_strong = as.numeric(as.factor(attack_strong)),
+         attack_weak = as.numeric(as.factor(attack_weak)),
+         species = as.numeric(as.factor(species)))
+
+pokemon_logged <- pokemon_model1 %>%
+  mutate(cp_new=log(cp_new),cp=log(cp))
+names(pokemon_logged)[2] <- c("cp_log")
+names(pokemon_logged)[14] <- c("cp_new_log")
+
+pokemon_test <- pokemon %>%
+  select(-name,-notes) %>%
+  select(-hp_new,-power_up_stardust_new,-attack_strong_value_new,-attack_weak_value_new,-weight_new,-height_new,-power_up_candy_new,-attack_strong_type_new,-attack_weak_type_new,-attack_strong_new,-attack_weak_new)
+
+pokemon_testlog <- pokemon_test %>%
+  mutate(cp_new=log(cp_new),cp=log(cp))
+names(pokemon_testlog)[2] <- c("cp_log")
+names(pokemon_testlog)[14] <- c("cp_new_log")
+```
+
+\section*{Introduction}
+In July of 2016, Pokemon Go became an overnight sensation with hundreds of millions of people having downloaded the mobile game. The whole point of the game is to try to catch all the Pokemon available and train them (increase their combat power, which is abbreviated cp) so that you can battle other players with your strengthened Pokemon. A quick note about Pokemon is that they can evolve into stronger forms, so an evolved Pokemon will generally always have a higher cp than a non-evolved Pokemon. A number of people have tried to generate models in an attempt to predict the best way to maximize cp for their Pokemon. This is what we will attempt to do ourselves: create a model to predict combat power for an evolved Pokemon. 
+
+To refresh your memory, the dataset we are looking at is an original data set collected by $OpenIntro^1$, most likely by some individual who was playing Pokemon Go and decided to record data. The dataset contains 75 observations across 26 variables, with each observation representing a randomly generated Pokemon that the gamer caught. Four species are represented in this data, so the conclusions drawn from this modeling process will reflect the population of these 4 particular species: Eevee, Pidgey, Caterpie, and Weedle. 
+
+We avoid using "new" predictor variables in our modeling process because as a user, you wouldn't have access to any of the "new" information, but if you're interested in whether your pokemon will evolve into one with a high cp ($cp\_new$), you would want to know which of the Pokemon's current stats can indicate a high $cp\_new$. The variables that we are particularly interested in are cp, hp, and power_up_stardust. Our intuition is that a pokemon with a higher cp might evolve into a pokemon with a higher cp. Hp, or hit points, refers to the amount of damage a Pokemon can sustain in battle before fainting. It would be interesting to see whether a Pokemon with high hp will also have high cp. Power up stardust is used to raise cp of the pokemon, but the catch here is we don't know the ideal amount of power up stardust to max out the $cp\_new$ of the evolved pokemon. 
+
+You can follow our work here: https://github.com/alexaaag/math158-project.
+
+\section*{Ridge Regression and Lasso}
+```{r, include=FALSE}
+set.seed(312)
+
+#create lambda grid
+lambda.grid = 10^seq(5,-5, length =100)
+
+#x matrix, categorical variables have been factorized and are numeric
+x <- model.matrix( ~species + cp_log + hp + weight + height + power_up_stardust + power_up_candy + attack_weak + attack_weak_type + attack_weak_value + attack_strong + attack_strong_type + attack_strong_value, pokemon_logged)
+
+#run CV RR
+pokemon.rr.cv <- cv.glmnet(x, as.numeric(pokemon_logged$cp_new_log), alpha=0, lambda=lambda.grid, standardize = TRUE)
+  
+#find min lambda
+opt_lambda_RR <- pokemon.rr.cv$lambda.min
+
+#plot CVRR
+plot(pokemon.rr.cv)
+abline(v=log(pokemon.rr.cv$lambda.min), col="green")
+
+#get RR coefficients
+pokemon.rr.cv_fit <- pokemon.rr.cv$glmnet.fit
+tidy(pokemon.rr.cv_fit)
+
+#run CV lasso
+pokemon.lasso.cv <- cv.glmnet(x, as.numeric(pokemon_logged$cp_new_log), alpha=1, lambda=lambda.grid, standardize = TRUE)
+
+#find min lambda
+opt_lambda_lasso <- pokemon.lasso.cv$lambda.min
+
+#plot CVlasso
+plot(pokemon.lasso.cv)
+abline(v=log(pokemon.lasso.cv$lambda.min), col="green")
+
+#get lasso coefficients
+pokemon.lasso.cv_fit <- pokemon.lasso.cv$glmnet.fit
+tidy(pokemon.lasso.cv_fit)
+
+MLR.model <- lm(cp_new_log ~ cp_log + species + attack_strong_value + 
+    hp + weight, data = pokemon_logged)
+summary(MLR.model)
+```
+```{r, echo=FALSE}
+par(mfrow=c(1,2))
+#plot CVRR
+RRplot <- plot(pokemon.rr.cv)
+abline(v=log(pokemon.rr.cv$lambda.min), col="green")
+
+#plot CVlasso
+lassoplot <- plot(pokemon.lasso.cv)
+abline(v=log(pokemon.lasso.cv$lambda.min), col="green")
+```
+Ridge regression shrunk the coefficients closer to zero than multiple linear regression did. For instance, if we compare the coefficients of $cp_{log}$, it is 1.186 in our linear regression model, and 1.24e-5 in the ridge regression model. On the other hand, lasso regression not only shrunk the coefficients but also performed variable selection, selecting $cp_{log}$, $attack\_strong\_value$ and $attack\_weak\_value$ to name a few.
+
+```{r, include=FALSE}
+#predicted response from MLR
+MLR.model<-lm(cp_new_log ~ cp_log + species + attack_strong_value + 
+    hp + weight, data = pokemon_logged)
+val.rr <- data.frame(pokemon_logged[,-10])
+pred.MLR <- augment(MLR.model,newdata=val.rr,type.predict = "response")
+pred.MLR$.fitted
+
+#predicted response from RR
+pred.RR <- predict(pokemon.rr.cv_fit, newx = x, s = opt_lambda_RR)
+
+#predicted response from lasso
+pred.lasso <- predict(pokemon.lasso.cv_fit, newx = x, s = opt_lambda_lasso)
+
+#tidy data
+pokemon_pred <- data.frame(pokemon_logged$cp_new_log, pred.MLR$.fitted, pred.RR, pred.lasso)
+colnames(pokemon_pred) <- c("cp_new_obs", "cp_new_MLR", "cp_new_RR", "cp_new_lasso")
+pokemon_tidy <- gather(pokemon_pred, key = Method, value = Prediction, -cp_new_obs)
+```
+
+```{r, echo=FALSE}
+#plot predictions
+ggplot(pokemon_tidy, aes(x = cp_new_obs, y = Prediction, group = Method, color = Method)) +
+  geom_jitter() + 
+  geom_smooth(method = 'lm', se = FALSE)
+```
+
+From this figure, it seems ridge regression and lasso seem to predict very similarly as multiple linear regression, since the slopes of each regression fit basically overlap each other. 
+
+\section*{Smoothing}
+```{r, include=FALSE}
+xlims <- range(pokemon_logged$cp_log)
+x.grid <- seq(from=xlims[1], to=xlims[2])
+
+#regression spline with df=3
+cpnew.rs1 <- lm(cp_new_log ~ bs(cp_log, df=3, degree = 1), data = pokemon_logged)
+SSE.rs1 <- sum(cpnew.rs1$residuals^2)
+
+cpnew.rs1.pred <- predict(cpnew.rs1, newdata = list(cp_log=x.grid), se = TRUE)
+cpnew.rs1.se <- cbind(cpnew.rs1.pred$fit + 2*cpnew.rs1.pred$se.fit,
+                   cpnew.rs1.pred$fit - 2*cpnew.rs1.pred$se.fit)
+
+plot(pokemon_logged$cp_log, pokemon_logged$cp_new_log, xlim = range(pokemon_logged$cp_log), cex = .5, pch = 19, 
+     col = "darkgrey", xlab = "Cp_log", ylab = "Cp_new_log")
+title("Regression Spline (df=3), SSE=4.429", outer = F)
+lines(x.grid, cpnew.rs1.pred$fit, lwd = 2, col = "blue")
+matlines(x.grid, cpnew.rs1.se, lwd = 1, col = "blue", lty = 3)
+
+#regression spline with df=4
+cpnew.rs2 <- lm(cp_new_log ~ bs(cp_log, df=4, degree = 1), data = pokemon_logged)
+SSE.rs2 <- sum(cpnew.rs2$residuals^2)
+
+cpnew.rs2.pred <- predict(cpnew.rs2, newdata = list(cp_log=x.grid), se = TRUE)
+cpnew.rs2.se <- cbind(cpnew.rs2.pred$fit + 2*cpnew.rs2.pred$se.fit,
+                   cpnew.rs2.pred$fit - 2*cpnew.rs2.pred$se.fit)
+
+plot(pokemon_logged$cp_log, pokemon_logged$cp_new_log, xlim = range(pokemon_logged$cp_log), cex = .5, pch = 19, 
+     col = "darkgrey", xlab = "Cp_log", ylab = "Cp_new_log")
+title("Regression Spline (df=4), SSE=4.335", outer = F)
+lines(x.grid, cpnew.rs2.pred$fit, lwd = 2, col = "blue")
+matlines(x.grid, cpnew.rs2.se, lwd = 1, col = "blue", lty = 3)
+
+#regression spline with df=5
+cpnew.rs3 <- lm(cp_new_log ~ bs(cp_log, df=5, degree = 1), data = pokemon_logged)
+SSE.rs3 <- sum(cpnew.rs3$residuals^2)
+
+cpnew.rs3.pred <- predict(cpnew.rs3, newdata = list(cp_log=x.grid), se = TRUE)
+cpnew.rs3.se <- cbind(cpnew.rs3.pred$fit + 2*cpnew.rs3.pred$se.fit,
+                   cpnew.rs3.pred$fit - 2*cpnew.rs3.pred$se.fit)
+
+plot(pokemon_logged$cp_log, pokemon_logged$cp_new_log, xlim = range(pokemon_logged$cp_log), cex = .5, pch = 19, 
+     col = "darkgrey", xlab = "Cp_log", ylab = "Cp_new_log")
+title("Regression Spline (df=5), SSE=4.300", outer = F)
+lines(x.grid, cpnew.rs3.pred$fit, lwd = 2, col = "blue")
+matlines(x.grid, cpnew.rs3.se, lwd = 1, col = "blue", lty = 3)
+
+#regression spline with df=6
+cpnew.rs4 <- lm(cp_new_log ~ bs(cp_log, df=6, degree = 1), data = pokemon_logged)
+SSE.rs4 <- sum(cpnew.rs4$residuals^2)
+
+cpnew.rs4.pred <- predict(cpnew.rs4, newdata = list(cp_log=x.grid), se = TRUE)
+cpnew.rs4.se <- cbind(cpnew.rs4.pred$fit + 2*cpnew.rs4.pred$se.fit,
+                   cpnew.rs4.pred$fit - 2*cpnew.rs4.pred$se.fit)
+
+plot(pokemon_logged$cp_log, pokemon_logged$cp_new_log, xlim = range(pokemon_logged$cp_log), cex = .5, pch = 19, 
+     col = "darkgrey", xlab = "Cp_log", ylab = "Cp_new_log")
+title("Regression Spline (df=6), SSE=4.322", outer = F)
+lines(x.grid, cpnew.rs4.pred$fit, lwd = 2, col = "blue")
+matlines(x.grid, cpnew.rs4.se, lwd = 1, col = "blue", lty = 3)
+
+#plot all the splines on one
+splineplot <- plot(pokemon_logged$cp_log, pokemon_logged$cp_new_log, xlim = range(pokemon_logged$cp_log), cex = .5, pch = 19, col = "darkgrey", xlab = "Cp_log", ylab = "Cp_new_log")
+title("Regression Spline", outer = F)
+lines(x.grid, cpnew.rs1.pred$fit, lwd = 2, col = "blue")
+matlines(x.grid, cpnew.rs1.se, lwd = 1, col = "blue", lty = 3)
+lines(x.grid, cpnew.rs2.pred$fit, lwd = 2, col = "green")
+matlines(x.grid, cpnew.rs2.se, lwd = 1, col = "green", lty = 3)
+lines(x.grid, cpnew.rs3.pred$fit, lwd = 2, col = "red")
+matlines(x.grid, cpnew.rs3.se, lwd = 1, col = "red", lty = 3)
+lines(x.grid, cpnew.rs4.pred$fit, lwd = 2, col = "black")
+matlines(x.grid, cpnew.rs4.se, lwd = 1, col = "black", lty = 3)
+```
+
+```{r, include=FALSE}
+#loess, span 0.2
+cpnew.loess1 <- loess(cp_new_log ~ cp_log, span = 0.2, data = pokemon_logged)
+
+cpnew.loess1.pred <- predict(cpnew.loess1, newdata = data.frame(cp_log=x.grid), se = TRUE)
+cpnew.loess1.se <- cbind(cpnew.loess1.pred$fit + 2*cpnew.loess1.pred$se.fit,
+                    cpnew.loess1.pred$fit - 2*cpnew.loess1.pred$se.fit)
+SSE.loess1 <- sum(cpnew.loess1$residuals^2)
+
+#loess, span 0.4
+cpnew.loess2 <- loess(cp_new_log ~ cp_log, span = 0.4, data = pokemon_logged)
+
+cpnew.loess2.pred <- predict(cpnew.loess2, newdata = data.frame(cp_log=x.grid), se = TRUE)
+cpnew.loess2.se <- cbind(cpnew.loess2.pred$fit + 2*cpnew.loess2.pred$se.fit,
+                    cpnew.loess2.pred$fit - 2*cpnew.loess2.pred$se.fit)
+SSE.loess2 <- sum(cpnew.loess2$residuals^2)
+
+#loess, span 0.6
+cpnew.loess3 <- loess(cp_new_log ~ cp_log, span = 0.6, data = pokemon_logged)
+
+cpnew.loess3.pred <- predict(cpnew.loess3, newdata = data.frame(cp_log=x.grid), se = TRUE)
+cpnew.loess3.se <- cbind(cpnew.loess3.pred$fit + 2*cpnew.loess3.pred$se.fit,
+                    cpnew.loess3.pred$fit - 2*cpnew.loess3.pred$se.fit)
+SSE.loess3 <- sum(cpnew.loess3$residuals^2)
+
+#loess, span 0.8
+cpnew.loess4 <- loess(cp_new_log ~ cp_log, span = 0.8, data = pokemon_logged)
+
+cpnew.loess4.pred <- predict(cpnew.loess4, newdata = data.frame(cp_log=x.grid), se = TRUE)
+cpnew.loess4.se <- cbind(cpnew.loess4.pred$fit + 2*cpnew.loess4.pred$se.fit,
+                    cpnew.loess4.pred$fit - 2*cpnew.loess4.pred$se.fit)
+
+#loess plot
+loessplot <- plot(pokemon_logged$cp_log, pokemon_logged$cp_new_log, xlim = xlims, cex = .5, pch = 19, col = "darkgrey", xlab = "cp_log", ylab = "cp_new_log")
+title("Loess Fit", outer = F)
+lines(x.grid, cpnew.loess1.pred$fit, lwd = 2, col = "blue")
+matlines(x.grid, cpnew.loess1.se, lwd = 1, col = "blue", lty = 3)
+lines(x.grid, cpnew.loess2.pred$fit, lwd = 2, col = "green")
+matlines(x.grid, cpnew.loess2.se, lwd = 1, col = "green", lty = 3)
+lines(x.grid, cpnew.loess3.pred$fit, lwd = 2, col = "red")
+matlines(x.grid, cpnew.loess3.se, lwd = 1, col = "red", lty = 3)
+lines(x.grid, cpnew.loess4.pred$fit, lwd = 2, col = "black")
+matlines(x.grid, cpnew.loess4.se, lwd = 1, col = "black", lty = 3)
+```
+
+```{r, echo=FALSE}
+par(mfrow=c(1,2))
+
+splineplot <- plot(pokemon_logged$cp_log, pokemon_logged$cp_new_log, xlim = range(pokemon_logged$cp_log), cex = .5, pch = 19, col = "darkgrey", xlab = "Cp_log", ylab = "Cp_new_log")
+title("Regression Spline", outer = F)
+lines(x.grid, cpnew.rs1.pred$fit, lwd = 2, col = "blue")
+matlines(x.grid, cpnew.rs1.se, lwd = 1, col = "blue", lty = 3)
+lines(x.grid, cpnew.rs2.pred$fit, lwd = 2, col = "green")
+matlines(x.grid, cpnew.rs2.se, lwd = 1, col = "green", lty = 3)
+lines(x.grid, cpnew.rs3.pred$fit, lwd = 2, col = "red")
+matlines(x.grid, cpnew.rs3.se, lwd = 1, col = "red", lty = 3)
+lines(x.grid, cpnew.rs4.pred$fit, lwd = 2, col = "black")
+matlines(x.grid, cpnew.rs4.se, lwd = 1, col = "black", lty = 3)
+
+loessplot <- plot(pokemon_logged$cp_log, pokemon_logged$cp_new_log, xlim = xlims, cex = .5, pch = 19, col = "darkgrey", xlab = "cp_log", ylab = "cp_new_log")
+title("Loess Fit", outer = F)
+lines(x.grid, cpnew.loess1.pred$fit, lwd = 2, col = "blue")
+matlines(x.grid, cpnew.loess1.se, lwd = 1, col = "blue", lty = 3)
+lines(x.grid, cpnew.loess2.pred$fit, lwd = 2, col = "green")
+matlines(x.grid, cpnew.loess2.se, lwd = 1, col = "green", lty = 3)
+lines(x.grid, cpnew.loess3.pred$fit, lwd = 2, col = "red")
+matlines(x.grid, cpnew.loess3.se, lwd = 1, col = "red", lty = 3)
+lines(x.grid, cpnew.loess4.pred$fit, lwd = 2, col = "black")
+matlines(x.grid, cpnew.loess4.se, lwd = 1, col = "black", lty = 3)
+```
+
+Both the smoothing spline and the loess curves fit the data extremely well. Changing the degrees of freedom, and hence the number of knots, for the smoothing splines improves the fit minimally to a certain point past which increasing the degrees of freedom actually begins to increase SSE. Likewise, increasing the span from 0.2 for loess actually increases SSE. 
+
+I would choose the regression spline model with 5 degrees of freedom because it fits the data very smoothly, and it still has a functional form which lends itself to interpretability. 
+
+\subsection*{Conclusion}
+
+Overall, running ridge regression, lasso, and smoothing methods such as regresion splines and loess did not improve the model fit relative to multiple linear regression by very much. This is fairly unsurprising to us because we noticed how extremely well linear regression fit our dataset previously, and this can most likely be attributed to the nature of how $cp_{new}$ is actually modeled in the game. We think $cp_{new}$ is likely coded into the game as a function of a linear combination of certain predictors and our multiple linear regression model fairly closely matches the real model used in-game. 
+
+%Other questions???
+
+\section*{Something New}
+
+\subsection*{Q-Q Plot}
+
+A normal probability plot is used to identify substantial departures from normality in the data. We chose in particular to plot what is known as a normal quantile-quantile plot (Q-Q plot in short), which plots sample quantiles against theoretical quantiles from a continuous cumultaive distribution function such as the standard normal distribution. Mathematically, the Q–Q plot draws the $q$-th quantile of theoretical cumulative probability distribution function F against the q-th quantile of our sample data for a range of values of q. Thus, the Q–Q plot is a parametric curve indexed over [0,1] with values in the real plane $R^2$. The units of a Q-Q plot are rankits, which are the expected values of the order statistics of a sample from the standard normal distribution the same size as the data. A $y=x$ reference line is also plotted and if the sample data also come from a normal distribution, the points should fall roughly along this reference line. A q-q plot is important because it can provide more information about the nature of the departure from normality and assess "goodness-of-fit" graphically.
+
+```{r, echo=FALSE}
+pokemon.stdres = rstandard(MLR.model)
+qqnorm(pokemon.stdres,
+       ylab = "Standardized Residuals",
+       xlab="Normal Scores",
+       main="Pokemon cp_new")
+qqline(pokemon.stdres)
+
+qqnorm(pokemon_logged$cp_log)
+qqline(pokemon_logged$cp_log, col = "steelblue", lwd = 2)
+```
+
+In our Q-Q plot, we see that the points do not fall on the line as they follow a nonlinear pattern, suggesting that $cp\_log$ does not follow a normal distribution. This is interesting to us because we see that even after we log-transformed cp, we see that there are still departures from normality, most likely caused by the Eevee outliers. 
+
+\subsection*{Added Variable Plots}
+
+Added variable plots, also known as partial regression plot, attempt to show the marginal effect of adding another variable to a model already having one or more independent variables. Added variable plots are formed by first computing the residuals of regressing the response variable against the independent variable(s) but omitting the variable of interest, $X_i$. Let's call this $Y._{[i]}$ Next, the residuals are computed from regressing $X_i$ against the remaining independent variables. Let's call this $X_{i.[i]}$ The residuals from $Y._{[i]}$ and $X_{i.[i]}$ are then plotted against each other. 
+For this analysis, the underlying assumption is that variables aren't highly correlated. 
+
+```{r, echo=FALSE}
+library(car)
+avPlot(MLR.model, variable = "weight", id.n = TRUE, main=paste("Added-Variable Plot: weight"))
+```
+This plot contains the least squares line which has slope of -0.01861, which suggests that the linear relationship between $cp\_new\_log$ and weight is slightly negative. The scatter of the points around the least square lines is about the same to the scatter around the horizontal line $e(cp\_new\_log|other \ variables)$, indicating that adding weight to the regression model does not substantially reduce the error sum of squares. In fact, the coefficient of partial determination for the linear effect of weight is $R^2_{Y weight|cp, species, attack\_strong\_value, hp}=0.0283$. 
+
+Another benefit of an added variable plot is it allows us to determine influential points, after accounting for the other variables in the model.
+
+\section*{Summary Report}
+
