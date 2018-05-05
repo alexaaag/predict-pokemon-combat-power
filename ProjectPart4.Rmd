@@ -292,8 +292,6 @@ I would choose the regression spline model with 5 degrees of freedom because it 
 
 Overall, running ridge regression, lasso, and smoothing methods such as regresion splines and loess did not improve the model fit relative to multiple linear regression by very much. This is fairly unsurprising to us because we noticed how extremely well linear regression fit our dataset previously, and this can most likely be attributed to the nature of how $cp_{new}$ is actually modeled in the game. We think $cp_{new}$ is likely coded into the game as a function of a linear combination of certain predictors and our multiple linear regression model fairly closely matches the real model used in-game. 
 
-%Other questions???
-
 \section*{Something New}
 
 \subsection*{Q-Q Plot}
