@@ -153,7 +153,6 @@ When we performed a nested F-test between the final model that we chose and our 
 
 \end{enumerate}
 
-
 ```{r, include=FALSE}
 final.model<-lm(cp_new_log ~ cp_log + species + attack_strong_value + 
     hp + weight, data = pokemon_logged)
