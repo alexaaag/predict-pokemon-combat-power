@@ -94,10 +94,13 @@ abline(v=log(pokemon.lasso.cv$lambda.min), col="green")
 pokemon.lasso.cv_fit <- pokemon.lasso.cv$glmnet.fit
 tidy(pokemon.lasso.cv_fit)
 
+r2lasso <- pokemon.lasso.cv_fit$dev.ratio[which(pokemon.lasso.cv_fit$lambda == opt_lambda_lasso)]
+
 MLR.model <- lm(cp_new_log ~ cp_log + species + attack_strong_value + 
     hp + weight, data = pokemon_logged)
 summary(MLR.model)
 ```
+
 ```{r, echo=FALSE}
 par(mfrow=c(1,2))
 #plot CVRR
@@ -444,7 +447,6 @@ We compute the test MSE as follows using $M=9$ components:
 pcr.pred=predict(pcr.fit,pokemondata[-train,],ncomp=9) 
 mean((pcr.pred-pokemondata[-train,]$cpnew)^2)
 ```
-
 
 \subsubsection{Interpretation}
 
