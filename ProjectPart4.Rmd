@@ -1,7 +1,7 @@
 ---
-title: "Part 4: Final Report"
+title: "Part 4 | I Can't Bel-Eevee It's the End"
 author: "Alex Gui and Lathan Liou"
-date: "Date Submitted: "
+date: "Date Submitted: May 9, 2018"
 output: pdf_document
 ---
 
@@ -111,6 +111,7 @@ abline(v=log(pokemon.rr.cv$lambda.min), col="green")
 lassoplot <- plot(pokemon.lasso.cv)
 abline(v=log(pokemon.lasso.cv$lambda.min), col="green")
 ```
+
 Ridge regression shrunk the coefficients closer to zero than multiple linear regression did. For instance, if we compare the coefficients of $cp_{log}$, it is 1.186 in our linear regression model, and 1.24e-5 in the ridge regression model. On the other hand, lasso regression not only shrunk the coefficients but also performed variable selection, selecting $cp_{log}$, $attack\_strong\_value$ and $attack\_weak\_value$ to name a few.
 
 ```{r, include=FALSE}
@@ -324,6 +325,7 @@ For this analysis, the underlying assumption is that variables aren't highly cor
 library(car)
 avPlot(MLR.model, variable = "weight", id.n = TRUE, main=paste("Added-Variable Plot: weight"))
 ```
+
 This plot contains the least squares line which has slope of -0.01861, which suggests that the linear relationship between $cp\_new\_log$ and weight is slightly negative. The scatter of the points around the least square lines is about the same to the scatter around the horizontal line $e(cp\_new\_log|other \ variables)$, indicating that adding weight to the regression model does not substantially reduce the error sum of squares. In fact, the coefficient of partial determination for the linear effect of weight is $R^2_{Y weight|cp, species, attack\_strong\_value, hp}=0.0283$. 
 
 Another benefit of an added variable plot is it allows us to determine influential points, after accounting for the other variables in the model.
@@ -331,7 +333,7 @@ Another benefit of an added variable plot is it allows us to determine influenti
 \subsection{Unsupervised Learning}
 In the previous write-ups, our analysis concerns predictions: given a set of explanatory variables $X_1,...X_{p-1}$ and $n$ observations, how can we predict the response variable $Y$? We have adopted various regression techniques and yielded satisfying results. However, in this part of analysis, we want to shift our focus away from the $Y$ variable and ask ourselves: what are something interesting things we can say about the $X$s? What are some underlying structures and how can we present them efficiently? We introduce the concept of unsupervised learning, "a set of statistical tools intended for the setting in which we have only a set of features X1, X2, . . . , Xp measured on n observations."
 
-\subsection{Principal Components Analysis(PCA)}
+\subsection{Principal Components Analysis (PCA)}
 Principal components analysis is widely used as an unsupervised learning method for feature extraction and data compression. In our analysis, we will apply principal components in our regression model as a dimensionality reduction technique. The intuition behind PCA is: given a set of highly correlated predictors, PCA will transform it into a smaller set of linearly independent variables called principal components. The transformation is defined such that the first principal component direction captures the greatest possible variability in the data, in others words, explain the most variability of the data. The succeeding principal components are linear combinations of the variables that is un- correlated with the preceding component and has largest variance subject to this constraint. The set of components constitute a basis for our data space.
 
 \subsection{Principal Components Regression}
@@ -344,7 +346,6 @@ pokemondata<-pokemon %>%
 pokemondata<-pokemondata[,!grepl("_new", colnames(pokemondata))]
 ```
 
-
 The principal components regression approach will first construct $M$ principal components and then regress on the components instead of individual predictors. The underlying assumption of the model is "the directions in which $X_1,...X_p$ shows the greatest variance are those associated with Y". Although this assumption is not guaranteed, it regardless provides a decent approximation that often yields good results. $M$, the number of principal components, is our tuning parameter that will be chosen by cross-validation.
 
 We believe PCA works well with our pokemon data given the existence of strong correlation among our predictors. Our analysis shows that PCR greatly reduced variance and contributed to our model's predictive power.
@@ -356,7 +357,6 @@ corrplot(res, type = "upper", order = "hclust",
          tl.col = "black", tl.srt = 45)
 title(sub="Correlation Plot")
 ```
-
 
 ## Principal Components
 Our model first constructs 9 principal components(this makes sense since $p=9$ and $M \leq p$). 
@@ -435,7 +435,6 @@ pcr.fit = pcr(cpnew~.,data=pokemondata[train,],scale=TRUE,validation="CV")
 summary(pcr.fit)
 ```
 
-
 The metric of cross-validation is $root\_mean\_squared\_error$. Ideally, we want to pick $M$ where the CV score is minimized. 
 
 ```{r,echo=FALSE}
@@ -450,5 +449,5 @@ mean((pcr.pred-pokemondata[-train,]$cpnew)^2)
 
 \subsubsection{Interpretation}
 
-\section*{Summary Report}
+\section*{Summary: How to get the best Pokemon?}
 
