@@ -301,33 +301,33 @@ Overall, running ridge regression, lasso, and smoothing methods such as regressi
 
 \subsection*{Q-Q Plot}
 
-A normal probability plot is used to identify substantial departures from normality in the data. We chose in particular to plot what is known as a normal quantile-quantile plot (Q-Q plot in short), which plots sample quantiles against theoretical quantiles from a continuous cumulative distribution function such as the standard normal distribution. Mathematically, the Q–Q plot draws the $q$-th quantile of theoretical cumulative probability distribution function F against the q-th quantile of our sample data for a range of values of q. Thus, the Q–Q plot is a parametric curve indexed over [0,1] with values in the real plane $R^2$. The units of a Q-Q plot are rankits, which are the expected values of the order statistics of a sample from the standard normal distribution the same size as the data. A $y=x$ reference line is also plotted and if the sample data also come from a normal distribution, the points should fall roughly along this reference line. A q-q plot is important because it can provide more information about the nature of the departure from normality and assess "goodness-of-fit" graphically.
+A normal probability plot is used to identify substantial departures from normality in the data. We chose in particular to plot what is known as a normal quantile-quantile plot (Q-Q plot for short), which plots sample quantiles ordered and plotted in a continuous cumulative distribution function against theoretical quantiles from a standard normal distribution. A $y=x$ reference line is also plotted and if the sample data also come from a normal distribution, the points should fall roughly along this reference line. A q-q plot is important because it can provide more information about whether the normality assumption is violated.
 
 ```{r, echo=FALSE}
 pokemon.stdres = rstandard(MLR.model)
 qqnorm(pokemon.stdres,
-       ylab = "Standardized Residuals",
-       xlab="Normal Scores",
-       main="Pokemon cp_new")
+       ylab = "Sample Quantiles",
+       xlab="Theoretical Quantiles",
+       main="Normal Q-Q Plot")
 qqline(pokemon.stdres)
 
-qqnorm(pokemon_logged$cp_log)
-qqline(pokemon_logged$cp_log, col = "steelblue", lwd = 2)
+#qqPlot(MLR.model)
+#qqnorm(pokemon_logged$cp_log)
+#qqline(pokemon_logged$cp_log, col = "steelblue", lwd = 2)
 ```
 
-In our Q-Q plot, we see that the points do not fall on the line as they follow a nonlinear pattern, suggesting that $cp\_log$ does not follow a normal distribution. This is interesting to us because we see that even after we log-transformed cp, we see that there are still departures from normality, most likely caused by the Eevee outliers. 
+In our Q-Q plot, we observe that the outlying points do not fall on the line; however, we are not concerned with our ability to do inference since we did note a couple of outliers from before, and the majority of the data is fit by the model.   
 
 \subsection*{Added Variable Plots}
 
-Added variable plots, also known as partial regression plot, attempt to show the marginal effect of adding another variable to a model already having one or more independent variables. Added variable plots are formed by first computing the residuals of regressing the response variable against the independent variable(s) but omitting the variable of interest, $X_i$. Let's call this $Y._{[i]}$ Next, the residuals are computed from regressing $X_i$ against the remaining independent variables. Let's call this $X_{i.[i]}$ The residuals from $Y._{[i]}$ and $X_{i.[i]}$ are then plotted against each other. 
-For this analysis, the underlying assumption is that variables aren't highly correlated. 
+Added variable plots (AV plots), also known as partial regression plot, attempt to show the marginal effect of adding another variable to a model already having one or more independent variables. Added variable plots are formed by first computing the residuals of regressing the response variable against the independent variable(s) but omitting the variable of interest, $X_i$. Let's call this $Y._{[i]}$ Next, the residuals are computed from regressing $X_i$ against the remaining independent variables. Let's call this $X_{i.[i]}$ The residuals from $Y._{[i]}$ and $X_{i.[i]}$ are then plotted against each other. For this analysis, one underlying assumption is that the explanatory variables are not highly correlated with each other and that the explanatory variables have to be quantitative. One way to interpret AV plots is to compare the scatter of the points about the least squares lines and the scatter of the points around the horizontal line at 0. If the scatters are different, then we conclude that adding variable X to the model substantially reduced the error sum of squares. 
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, fig.width=8, fig.height=8}
 library(car)
-avPlot(MLR.model, variable = "weight", id.n = TRUE, main=paste("Added-Variable Plot: weight"))
+avPlots(MLR.model)
 ```
 
-This plot contains the least squares line which has slope of -0.01861, which suggests that the linear relationship between $cp\_new\_log$ and weight is slightly negative. The scatter of the points around the least square lines is about the same to the scatter around the horizontal line $e(cp\_new\_log|other \ variables)$, indicating that adding weight to the regression model does not substantially reduce the error sum of squares. In fact, the coefficient of partial determination for the linear effect of weight is $R^2_{Y weight|cp, species, attack\_strong\_value, hp}=0.0283$. 
+As shown, variables such as $cp\_log$ and $attack\_strong\_value$ are highly correlated with $cp\_new\_log$, which indicate that adding $cp\_log$ or $attack\_strong\_value$ substantially reduces the error sum of squares. On the other hand, variables such as weight were slightly correlated with $cp\_new\_log$, indicating that adding weight to the regression model does not substantially reduce the error sum of squares. In fact, the coefficient of partial determination for the linear effect of weight is $R^2_{Y weight|cp, species, attack\_strong\_value, hp}=0.0283$. One thing to note is that the AV plot does not really make sense for species since species is a factor variable. 
 
 Another benefit of an added variable plot is it allows us to determine influential points, after accounting for the other variables in the model.
 

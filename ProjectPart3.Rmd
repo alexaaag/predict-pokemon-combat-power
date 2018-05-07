@@ -173,10 +173,10 @@ The variability in $cp\_new$ remaining after modeling $cp\_new$ using cp, $attac
 The variability in $cp\_new$ remaining after modeling $cp\_new$ using cp, species, hp, and weight, is reduced by a further 31.2\% when additionally adding $attack\_strong\_value$ to the model.
 
 \item $R^2_{Y hp|cp, species, attack\_strong\_value, weight}$
-The variability in $cp\_new$ remaining after modeling $cp\_new$ using cp, species, $attack\_strong\_value$, and weight, is reduced by a further 7.67\% when additionally adding species to the model.
+The variability in $cp\_new$ remaining after modeling $cp\_new$ using cp, species, $attack\_strong\_value$, and weight, is reduced by a further 7.67\% when additionally adding hp to the model.
 
 \item $R^2_{Y weight|cp, species, attack\_strong\_value, hp}$
-The variability in $cp\_new$ remaining after modeling $cp\_new$ using cp, attack\_strong\_value, hp, and weight, is reduced by a further 2.83\% when additionally adding species to the model.
+The variability in $cp\_new$ remaining after modeling $cp\_new$ using cp, attack\_strong\_value, hp, and weight, is reduced by a further 2.83\% when additionally adding weight to the model.
 
 \end{enumerate}
 
