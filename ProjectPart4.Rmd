@@ -102,7 +102,7 @@ MLR.model <- lm(cp_new_log ~ cp_log + species + attack_strong_value +
 summary(MLR.model)
 ```
 
-We ran ridge regression and LASSO on our explanatory variables of interest. 
+We ran ridge regression and LASSO on our explanatory variables of interest. Note that we applied log transformation on $cp\_new$ and $cp$ to ensure normality. The corresponding logged variables are named $cp\_new\_log$ and $cp\_log$,
 
 ```{r, echo=FALSE}
 par(mfrow=c(1,2))
@@ -496,7 +496,7 @@ We observed that our response variable $cp\_new$ is strongly correlated with $cp
 
 After substantial analysis, we decided to present a linear regression model using three of the most important features that will help users like yourself predict their Pokemons' combat power post-evolution. To reiterate, since our data only includes four species, our inference only applies to the population of these four species. We used LASSO (Least Absolute Shrinkage and Selection Operator) to build our model. The decision is motivated by 1) high $R^2$ 2) high interpretability 3) our residual plot and 4) correspondence with our PCA analysis that complements the LASSO model. The LASSO model works well with our data because our variables are predominantly quantitative and the model's feature selection capacity distills what the important characteristics are of a strong pokemon for users. One drawback is that we cannot obtain p-values of tests of significance because LASSO does not have a closed form that allows us to calculate variance easily.
 
-Our final model is: $E[\log_{cp\_new}]=0.64+0.89\log{cp}+0.012attack\_weak+0.0081attack\_strong$. The cross-validated $R^2$ is 0.984 which means the model explains 98.4% of the variability in $\log_{cp\_new}$. The residual plot further shows that 1) linearity is met and 2) there is a good scatter around the 0 line indicating constant variance.
+Our final model is: $E[\log{cp\_new}]=0.64+0.89\log{cp}+0.012attack\_weak+0.0081attack\_strong$. The cross-validated $R^2$ is 0.984 which means the model explains 98.4% of the variability in $\log_{cp\_new}$. The residual plot further shows that 1) linearity is met and 2) there is a good scatter around the 0 line indicating constant variance.
 
 ```{r,echo=FALSE}
 plot(x=pred.lasso,y=pred.lasso-pokemon_logged$cp_new_log,xlab="fitted",ylab="residual",main="residual plot")
