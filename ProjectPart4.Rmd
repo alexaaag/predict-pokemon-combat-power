@@ -48,11 +48,11 @@ names(pokemon_testlog)[14] <- c("cp_new_log")
 ```
 
 \section*{Introduction}
-In July of 2016, Pokemon Go became an overnight sensation with hundreds of millions of people having downloaded the mobile game. The whole point of the game is to try to catch all the Pokemon available and train them (increase their combat power, which is abbreviated cp) so that you can battle other players with your strengthened Pokemon. A quick note about Pokemon is that they can evolve into stronger forms, so an evolved Pokemon will generally always have a higher cp than a non-evolved Pokemon. A number of people have tried to generate models in an attempt to predict the best way to maximize cp for their Pokemon. This is what we will attempt to do ourselves: create a model to predict combat power for an evolved Pokemon. 
+In July 2016, Pokemon Go became an overnight sensation with hundreds of millions of people downloading the mobile game. For most players, this game represents a nice coffee break. However, for more serious players, the objective is to try to obtain the strongest Pokemon possible available, which is indicated by the highest combat power, abbreviated cp, so that you can battle other players' pokemon and win. Usually players can catch weaker forms of Pokemon that, through training, can evolve into stronger forms, so an evolved Pokemon will generally always have a higher cp than a non-evolved Pokemon. In the search for the strongest Pokemon, players have wished to determine what characteristics would indicate that the pokemon they have is stronger relative to other players' pokemon. For instance, if a player had pokemon X and trained it to its maximum potential but pokemon X was still weaker than pokemon Y, the player would want to know why pokemon Y was still stronger. A number of people have tried to generate models in an attempt to predict the best way to maximize cp for their Pokemon. This is what we will attempt to do ourselves: create a model to predict combat power for an evolved Pokemon. 
 
-To refresh your memory, the dataset we are looking at is an original data set collected by $OpenIntro^1$, most likely by some individual who was playing Pokemon Go and decided to record data. The dataset contains 75 observations across 26 variables, with each observation representing a randomly generated Pokemon that the gamer caught. Four species are represented in this data, so the conclusions drawn from this modeling process will reflect the population of these 4 particular species: Eevee, Pidgey, Caterpie, and Weedle. 
+The dataset we are using to build our model is an original data set collected by $OpenIntro^1$. The dataset contains 75 observations across 26 variables, with each observation representing a randomly generated Pokemon that the gamer caught. Four species are represented in this data, so the conclusions drawn from this modeling process can only be inferred onto the population of these 4 particular species: Eevee, Pidgey, Caterpie, and Weedle. 
 
-We avoid using "new" predictor variables in our modeling process because as a user, you wouldn't have access to any of the "new" information, but if you're interested in whether your pokemon will evolve into one with a high cp ($cp\_new$), you would want to know which of the Pokemon's current stats can indicate a high $cp\_new$. The variables that we are particularly interested in are cp, hp, and power_up_stardust. Our intuition is that a pokemon with a higher cp might evolve into a pokemon with a higher cp. Hp, or hit points, refers to the amount of damage a Pokemon can sustain in battle before fainting. It would be interesting to see whether a Pokemon with high hp will also have high cp. Power up stardust is used to raise cp of the pokemon, but the catch here is we don't know the ideal amount of power up stardust to max out the $cp\_new$ of the evolved pokemon. 
+We avoid using "new" predictor variables in our modeling process because as a user, you wouldn't have access to any of the "new" information, but if you're interested in whether your pokemon will evolve into one with a high cp ($cp\_new$), you would want to know which of the Pokemon's current stats could indicate a high $cp\_new$. We also avoid categorical variables such as the name of the attack and attack type because they don't inherently contain any information that users would be concerned with; it's the attack value that matters. In our exploratory analysis, we also log-transformed cp and $cp\_new$ because we had noticed issues of nonconstant variance in the residual plot.
 
 You can follow our work here: https://github.com/alexaaag/math158-project.
 
@@ -64,7 +64,7 @@ set.seed(312)
 lambda.grid = 10^seq(5,-5, length =100)
 
 #x matrix, categorical variables have been factorized and are numeric
-x <- model.matrix( ~species + cp_log + hp + weight + height + power_up_stardust + power_up_candy + attack_weak + attack_weak_type + attack_weak_value + attack_strong + attack_strong_type + attack_strong_value, pokemon_logged)
+x <- model.matrix( ~species + cp_log + hp + weight + height + power_up_stardust + power_up_candy + attack_weak_value + attack_strong_value, pokemon_logged)
 
 #run CV RR
 pokemon.rr.cv <- cv.glmnet(x, as.numeric(pokemon_logged$cp_new_log), alpha=0, lambda=lambda.grid, standardize = TRUE)
@@ -102,6 +102,8 @@ MLR.model <- lm(cp_new_log ~ cp_log + species + attack_strong_value +
 summary(MLR.model)
 ```
 
+We ran ridge regression and LASSO on our explanatory variables of interest. 
+
 ```{r, echo=FALSE}
 par(mfrow=c(1,2))
 #plot CVRR
@@ -111,9 +113,16 @@ abline(v=log(pokemon.rr.cv$lambda.min), col="green")
 #plot CVlasso
 lassoplot <- plot(pokemon.lasso.cv)
 abline(v=log(pokemon.lasso.cv$lambda.min), col="green")
+dev.off()
+
+coef.MLR <- coef(MLR.model)[-1]
+coef.MLR1 <- c(-0.000808, 1.186140, -0.009644, -0.018610, 0, 0, 0, 0, 0.020735)
+coef.RR <- as.numeric(coef(pokemon.rr.cv, s = opt_lambda_RR))[-c(1,2)]
+coef.lasso <- as.numeric(coef(pokemon.lasso.cv, s = opt_lambda_lasso))[-c(1,2)]
+pairs(data.frame(coef.MLR1, coef.RR, coef.lasso), pch = 19, cex = .75, col = "black")
 ```
 
-Ridge regression shrunk the coefficients closer to zero than multiple linear regression did. For instance, if we compare the coefficients of $cp_{log}$, it is 1.186 in our linear regression model, and 1.24e-5 in the ridge regression model. On the other hand, lasso regression not only shrunk the coefficients but also performed variable selection, selecting $cp_{log}$, $attack\_strong\_value$ and $attack\_weak\_value$ to name a few.
+As shown in the pairs plot, ridge regression shrunk the coefficients closer to zero than multiple linear regression did. On the other hand, lasso regression not only shrunk the coefficients but also performed variable selection more selectively than our stepwise regression did previously, selecting $cp_{log}$, $attack\_strong\_value$ and $attack\_weak\_value$ at our optimal lambda value.
 
 ```{r, include=FALSE}
 #predicted response from MLR
@@ -134,6 +143,8 @@ pokemon_pred <- data.frame(pokemon_logged$cp_new_log, pred.MLR$.fitted, pred.RR,
 colnames(pokemon_pred) <- c("cp_new_obs", "cp_new_MLR", "cp_new_RR", "cp_new_lasso")
 pokemon_tidy <- gather(pokemon_pred, key = Method, value = Prediction, -cp_new_obs)
 ```
+
+Next, we wanted to see how the predictions from our multiple linear regression, ridge regression, and our LASSO models would fare against each other.
 
 ```{r, echo=FALSE}
 #plot predictions
@@ -289,9 +300,9 @@ lines(x.grid, cpnew.loess4.pred$fit, lwd = 2, col = "black")
 matlines(x.grid, cpnew.loess4.se, lwd = 1, col = "black", lty = 3)
 ```
 
-Both the smoothing spline and the loess curves fit the data extremely well. Changing the degrees of freedom, and hence the number of knots, for the smoothing splines improves the fit minimally to a certain point past which increasing the degrees of freedom actually begins to increase SSE. Likewise, increasing the span from 0.2 for loess actually increases SSE. 
+We chose $cp_{log} to run our smoothing spline and the loess regressions. The smoothing splines and loess fit the data extremely well. Changing the degrees of freedom, and hence the number of knots, for the smoothing splines improves the fit minimally. At a certain point, increasing the degrees of freedom actually begins to increase SSE. Increasing the span from 0.2 for loess actually increases SSE. 
 
-I would choose the regression spline model with 5 degrees of freedom because it fits the data very smoothly, and it still has a functional form which lends itself to interpretability. 
+The spline and loess models are all extremely similar due to the nature of the data being perfectly correlated, but I would choose the spline model since it fits the data very smoothly, and it still has a functional form which lends itself to interpretability. 
 
 \subsection*{Conclusion}
 
