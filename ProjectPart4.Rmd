@@ -521,11 +521,12 @@ Ultimately, we built a clean model that has high predictive power and that very 
 
 \item sape research group (http://sape.inf.usi.ch/quick-reference/ggplot2/colour) Colors for ggplot are great
 
-\item Marc Böttinger (https://stats.stackexchange.com/questions/266592/how-to-calculate-r2-for-lasso-glmnet?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa) neat way of finding CV R-squared of lasso regression
+\item Marc Böttinger (https://stats.stackexchange.com/questions/266592/how-to-calculate-r2-for-lasso-glmnet?utm\_medium=organic\&utm\_source=google\_rich\_qa\&utm\_campaign=google\_rich\_qa) neat way of finding CV R-squared of lasso regression
 
-\item Online Stat book (http://onlinestatbook.com/2/advanced_graphs/q-q_plots.html) Info on QQplots
+\item Online Stat book (http://onlinestatbook.com/2/advanced\_graphs/q-q\_plots.html) Info on QQplots
 
-\item Silverfish (https://stats.stackexchange.com/questions/125561/what-does-an-added-variable-plot-partial-regression-plot-explain-in-a-multiple?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa) Great explanation of Added Variable plots
+\item Silverfish (https://stats.stackexchange.com/questions/125561/what-does-an-added-variable-plot-partial-regression-plot-explain-in-a-multiple?utm\_medium=organic\&utm\_source=google\_rich\_qa\&utm\_ \\
+campaign=google\_rich\_qa) Great explanation of Added Variable plots
 
 \item ISLR, PCA 
 
