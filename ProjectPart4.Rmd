@@ -375,7 +375,7 @@ Look at PC1. We observe that the higher the performance metrics, the higher the 
 We then plot our pokemon on our new principal components space:
 
 ```{r,fig.width=5,fig.height=5,echo=FALSE}
-require(png)
+library(png)
 
 # Get the PCA data
 pd <- cbind.data.frame(pokemondata, pca$x)
@@ -401,7 +401,7 @@ f_annotate <- function(x, y, name, size) {
 f_plot <- function(pd) {
   ggplot(data = pd, aes(x = PC1, y = PC2)) +
     geom_text(data = pd, aes(label = species), 
-              hjust = 0.5, vjust = -1, size = 1.5, alpha = 0.5) +
+              hjust = 1.5, vjust = -1, size = 1.5, alpha = 0.5) +
     mapply(f_annotate, x = pd$PC1, y = pd$PC2, name = pd$species, size = 0.8)  +
     theme_bw() +
     labs(x = "Overall Strength (PC1)", y = "Attack Strength (PC2)") +
@@ -417,7 +417,7 @@ f_plot(pd)
 ## Regression: 
 
 ```{r,echo=FALSE}
-pr.var=pca$sdev ^2
+pr.var=pca$sdev^2
 pve=pr.var/sum(pr.var)
 plot(pve, xlab="Principal Component", ylab="Proportion of Variance Explained ", ylim=c(0,1),type='l')
 ```
@@ -452,10 +452,10 @@ Are you a Pokemon Go player? Have you been struggling with trying to identify th
 
 These are the questions our report attempts to address. To kick start, we ran a comprehensive overview of the data at hand.
 ```{r,fig.height=8,fig.width=13,echo=FALSE}
-require(GGally)
+library(GGally)
 pokemon2<-pokemon %>%
   dplyr::select(cp_new,cp,species,hp,weight,attack_strong_value,power_up_stardust)
-ggpairs(pokemon2,aes(col=species))
+ggpairs(pokemon2, aes(col=species))
 ```
 
 We observed that our response variable $cp\_new$ is strongly correlated with $cp$, indicating that $cp$ might be a promising predictor. We also noticed the existence of correlation between pairs of explnatory variables and we kept that in mind in our model building process. 
