@@ -311,9 +311,9 @@ Overall, running ridge regression, lasso, and smoothing methods such as regressi
 
 \section*{Something New}
 
-\subsection*{Q-Q Plot}
+\subsection*{Q-Q Plot^2}
 
-A normal probability plot is used to identify substantial departures from normality in the data. We chose in particular to plot what is known as a normal quantile-quantile plot (Q-Q plot for short), which plots sample quantiles ordered and plotted in a continuous cumulative distribution function against theoretical quantiles from a standard normal distribution. A $y=x$ reference line is also plotted and if the sample data also come from a normal distribution, the points should fall roughly along this reference line. A q-q plot is important because it can provide more information about whether the normality assumption is violated.
+A normal probability plot is used to identify substantial departures from normality in the data. We chose in particular to plot what is known as a normal quantile-quantile plot (Q-Q plot for short), which plots sample quantiles ordered and plotted in a continuous cumulative distribution function against theoretical quantiles from a standard normal distribution. A $y=x$ reference line is also plotted and if the sample data also come from a normal distribution, the points should fall roughly along this reference line. A Q-Q plot is important because it can provide information about whether the normality technical condition of the residuals is violated.
 
 ```{r, echo=FALSE}
 pokemon.stdres = rstandard(MLR.model)
@@ -330,7 +330,7 @@ qqline(pokemon.stdres)
 
 In our Q-Q plot, we observe that the outlying points do not fall on the line; however, we are not concerned with our ability to do inference since we did note a couple of outliers from before, and the majority of the data is fit by the model.   
 
-\subsection*{Added Variable Plots}
+\subsection*{Added Variable Plots^3}
 
 Added variable plots (AV plots), also known as partial regression plot, attempt to show the marginal effect of adding another variable to a model already having one or more independent variables. Added variable plots are formed by first computing the residuals of regressing the response variable against the independent variable(s) but omitting the variable of interest, $X_i$. Let's call this $Y._{[i]}$ Next, the residuals are computed from regressing $X_i$ against the remaining independent variables. Let's call this $X_{i.[i]}$ The residuals from $Y._{[i]}$ and $X_{i.[i]}$ are then plotted against each other. For this analysis, one underlying assumption is that the explanatory variables are not highly correlated with each other and that the explanatory variables have to be quantitative. One way to interpret AV plots is to compare the scatter of the points about the least squares lines and the scatter of the points around the horizontal line at 0. If the scatters are different, then we conclude that adding variable X to the model substantially reduced the error sum of squares. 
 
@@ -344,7 +344,7 @@ As shown, variables such as $cp\_log$ and $attack\_strong\_value$ are highly cor
 Another benefit of an added variable plot is it allows us to determine influential points, after accounting for the other variables in the model.
 
 \section*{Principal Components Regression (PCR)}
-Principal components analysis is widely used as an unsupervised learning method for feature extraction and data compression. In our analysis, we will apply principal components in our regression model as a dimensionality reduction technique. The intuition behind PCA is: given a set of highly correlated predictors, PCA will transform it into a smaller set of linearly independent variables called principal components. The transformation is defined such that the first principal component direction captures the greatest possible variability in the data, in others words, explain the most variability of the data. The succeeding principal components are linear combinations of the variables that is un-correlated with the preceding component and has largest variance subject to this constraint. The set of components constitute a basis for our data space.
+Principal components analysis is widely used as an unsupervised learning method for feature extraction and data compression. In our analysis, we will apply principal components in our regression model as a dimensionality reduction technique. The intuition behind PCA is: given a set of highly correlated predictors, PCA will transform it into a smaller set of linearly independent variables called principal components. The transformation is defined such that the first principal component direction captures the greatest possible variability in the data, in other words, explains the greatest variability of the data. The succeeding principal components are linear combinations of the variables that is un-correlated with the preceding component and has largest variance subject to this constraint. The set of components constitutes a basis for our data space.
 
 ```{r,echo=FALSE}
 #clean the data
@@ -358,7 +358,7 @@ pokemondata<-pokemondata[,!grepl("_new", colnames(pokemondata))]
 
 The principal components regression approach will first construct $M$ principal components and then regress on the components instead of individual predictors. The underlying assumption of the model is "the directions in which $X_1,...X_p$ shows the greatest variance are those associated with Y" (ISLR). Although this assumption is not guaranteed, it regardless provides a decent approximation that often yields good results. $M$, the number of principal components, is our tuning parameter that will be chosen by cross-validation.
 
-We believe PCR works well with our pokemon data given the existence of strong correlation among our predictors.
+We believe PCR works well with our pokemon data given the existence of strong correlation among our predictors (check out our correlation plot down below!).
 
 ```{r,fig.width=8,fig.height=5,include=FALSE}
 #make a correlation plot
@@ -392,7 +392,7 @@ ggbiplot(pca2, obs.scale = 1, var.scale = 1,
   theme(legend.direction = 'horizontal', legend.position = 'top')+theme_bw()+xlim(c(-6,6))+ylim(c(-4,6))
 ```
 
-Look at PC1. We observe that the higher the performance metrics, the higher the PC1 value. Therefore we can interpret PC1 as a measurement of overall strength. As for PC2, we notice that higher PC2 is associated with higher attack value. Therefore we interpret PC2 as a measurement of attack strength.
+Let's look at PC1. We observe that the higher the performance metrics, the higher the PC1 value. Therefore we can interpret PC1 as a measurement of overall strength. As for PC2, we notice that higher PC2 is associated with higher attack value. Therefore we interpret PC2 as a measurement of attack strength.
 
 We then plot our pokemon on our PC1 and PC2 space:
 
@@ -432,7 +432,7 @@ f_plot <- function(pd) {
 f_plot(pd)
 ```
 
-\textbf{Interesting Insights:} Using principal components, we get to create two new powerful metrics to evaluate our pokemons. From the plot, you can observe that Eeeve in general has high overall strength and high attack strength. Pidgey has good attack stats but is weaker in general due to the creature's intrinsic nature. Caterpie and Weedle are weak on both metrics. Overall, this PCA gives you a high-level overview of our pokemon's strength. You should feel excited!
+\textbf{Interesting Insights:} Using principal components, we identify two new powerful metrics to evaluate our pokemons. From the plot, you can observe that Eeeve in general has high overall strength and high attack strength. Pidgey has good attack strength but is weaker that Eevees in general. Caterpie and Weedle are weak on both metrics. Overall, this PCA gives you a high-level overview of our pokemon's strength. If you own a Eevee, you should feel excited about evolving it because you will probably get a really strong evolution of Eevee!
 
 ## Regression 
 ```{r,echo=FALSE}
@@ -441,7 +441,9 @@ pve=pr.var/sum(pr.var)
 plot(pve, xlab="Principal Component", ylab="Proportion of Variance Explained ", ylim=c(0,1),type='l')
 ```
 Observe that the first two principal components explain more than 60% of the variability in the data. As $M \to 10$, the marginal contribution to variability explained decreases. Our regression model will use cross validation to tune $M$, the number of components as predictors.
+
 The cross-validation uses $root\_mean\_squared\_error$ as the metric. $M=9$ returns the smallest cv score. 
+
 ```{r,include=FALSE}
 library(pls)
 set.seed(47)
@@ -455,6 +457,7 @@ validationplot(pcr.fit,val.type="RMSE")
 ```
 
 Therefore we used all the components to build the linear regression model. Our result shows that all regression coefficients are signigicant and the adjusted $R^2=0.983$. 
+
 ```{r,include=FALSE}
 pc1 = pca$x[,1] 
 pc2 = pca$x[,2]
@@ -468,7 +471,7 @@ pc9 = pca$x[,9]
 summary(lm(pokemondata$cpnew~pc1+pc2+pc3+pc4+pc5+pc6+pc7+pc8+pc9)) # run the regression
 ```
 
-Interpretation:
+## Interpretation
 
 Our principal component regression model performs really well in predicting $cp\_new$. We also observe that our top two principal components (overall strength, attack strength) correspond to the predictors selected by LASSO (cp,attack_strong and attak_weak). However, we decide not to go with PCR model because it is not interpretable. 
 
@@ -480,9 +483,10 @@ abline(h=0)
 ```
 
 \section*{Summary: How to get the best Pokemon?}
-Are you a Pokemon Go player? Have you been struggling with trying to identify the strong pokemon and winning your battles? Are you curious if your pokemon will be good enough after evolution?
+Are you a Pokemon Go player? Have you been struggling trying to identify whether your Pokemon are strong and how to win your battles? Are you curious if your Pokemon will be strong enough after evolution?
 
-These are the questions our report attempts to address. To kick start, we ran a comprehensive overview of the data at hand.
+These are the questions our report attempts to address. The first thing we will show you is a comprehensive overview of all the variables that you could possibly consider as a Pokemon Go player.
+
 ```{r,fig.height=8,fig.width=13,echo=FALSE}
 library(GGally)
 pokemon2<-pokemon %>%
@@ -490,24 +494,41 @@ pokemon2<-pokemon %>%
 ggpairs(pokemon2, aes(col=species))
 ```
 
-We observed that our response variable $cp\_new$ is strongly correlated with $cp$, indicating that $cp$ might be a promising predictor. We also noticed the existence of correlation between pairs of explnatory variables and we kept that in mind in our model building process. 
+We observed that our response variable $cp\_new$ is strongly correlated with $cp$, indicating that $cp$ might be a promising predictor.
 
-After substantial analysis, we decided to present a linear regression model using three of the most important features that will help users predict their pokemon's combat power post-evolution. To reiterate, since our data only includes four species, our inference only applies to the population of these four species. We used LASSO (Least Absolute Shrinkage and Selection Operator) to build our model. The decision is motivated by 1) high $R^2$ 2) high interpretability 3) our residual plot and 4) correspondence with our PCA analysis that complements the LASSO model. The LASSO model works well with our data because our variables are predominantly quantitative and the model's feature selection capacity helps users understand what the characteristics are of a strong pokemon.
+After substantial analysis, we decided to present a linear regression model using three of the most important features that will help users like yourself predict their Pokemons' combat power post-evolution. To reiterate, since our data only includes four species, our inference only applies to the population of these four species. We used LASSO (Least Absolute Shrinkage and Selection Operator) to build our model. The decision is motivated by 1) high $R^2$ 2) high interpretability 3) our residual plot and 4) correspondence with our PCA analysis that complements the LASSO model. The LASSO model works well with our data because our variables are predominantly quantitative and the model's feature selection capacity distills what the important characteristics are of a strong pokemon for users. One drawback is that we cannot obtain p-values of tests of significance because LASSO does not have a closed form tht allows us to calculate variance easily.
 
-Our model is: $E[\log_{cp\_new}]=0.64+0.89\log{cp}+0.012attack\_weak+0.0081attack\_strong$. The cross-validated $R^2$ is 0.984 which means the model explains 98.4% of the variability in $\log(cp\_new)$. This model corresponds with our conclusion from $PCA$ whose top two principal components indicate overall strength ($cp$) and attack strength ($attack\_strong$ and $attack\_weak$). Essentially, this means that what users should be primarily concerned with when determining whether their Pokemon is inherently strong or not is their base combat power prior to evolution as well its move strength. The residual plot further shows that 1) linearity is met and 2) there is a good scatter around the 0 line indicating constant variance. We do have influential points that correspond to the Eeeves but we decided not to remove them because we believe our users are equally interested in the performance of Eeeves as well. Overall, the technical conditions are met and we are comfortable with inference on the following four Pokemon: Caterpie, Weedle, Pidgey and Eevee.
+Our final model is: $E[\log_{cp\_new}]=0.64+0.89\log{cp}+0.012attack\_weak+0.0081attack\_strong$. The cross-validated $R^2$ is 0.984 which means the model explains 98.4% of the variability in $\log_{cp\_new}$. The residual plot further shows that 1) linearity is met and 2) there is a good scatter around the 0 line indicating constant variance.
 
 ```{r,echo=FALSE}
 plot(x=pred.lasso,y=pred.lasso-pokemon_logged$cp_new_log,xlab="fitted",ylab="residual",main="residual plot")
 abline(h=0,col="red")
 ```
 
-```{r,include=FALSE}
-pokemon2<-pokemon %>%
-  dplyr::select(cp_new,cp,species,hp,weight,attack_strong_value,power_up_stardust)
-```
+This model corresponds with our conclusion from $PCA$ whose top two principal components indicate overall strength ($cp$) and attack strength ($attack\_strong$ and $attack\_weak$). \textbf{Essentially, this means that what users should be primarily concerned with when determining whether their Pokemon is inherently strong or not is their base combat power prior to evolution as well its move strength.} We do have influential points that correspond to the Eeeves but we decided not to remove them because we believe our users are equally interested in the performance of Eeeves as well. 
 
-\section*{Future Direction}
-Overall, the most interesting insight that surprised us was the fact that $cp_{new}$ could be explained primarily by cp, or combat power prior to evolution and attack value (both strong and weak). We did not expect this given that our exploratory data analysis did not indicate that attack value was highly correlated with $cp_{new}$. If we had more data of different species of Pokemon we would have liked to explore whether cp and species alone can predict $cp_{new}$ since in our correlation plot above, there is almost a perfect correlation between cp and $cp_{new}$. Further, having more data on differen Pokemon species would have allowed our analysis to be inferred onto many many more Pokemon that a Pokemon Go player might want to know about. 
-We also wish that there was data on battle statistics as well such as combat damage dealt to see whether that could factor in to explaining a Pokemon's strength. 
+\section*{Future Directions}
+Overall, the most interesting insight we obtained was the fact that $cp_{new}$ could be well explained by attack value (both strong and weak). We did not expect this since our exploratory data analysis did not indicate that attack value was highly correlated with $cp_{new}$. If we had more data of different species of Pokemon we would have liked to explore whether cp and species alone can predict $cp_{new}$ since in our correlation plot above, there is almost a perfect correlation between cp and $cp_{new}$. Further, having more data on different Pokemon species would have allowed our analysis to be inferred onto many many more Pokemon that a Pokemon Go player might want to know about. We also wish that there was data on battle statistics as well such as combat damage dealt to see whether that could factor in to explaining a Pokemon's strength. 
+Ultimately, we built a clean model that has high predictive power and that very clearly indicates what things a Pokemon Go player should pay attention to. We beleive with more data, we can extend our analysis such that we can inform users about the ins-and-outs of every Pokemon in the Pokemon Go universe. 
 
+\section{Sources}
 
+\begin{itemize}
+
+\item OpenIntro (https://www.openintro.org/stat/data/?data=pokemon). This is where downloaded the csv for our data.
+
+\item baptiste (https://stackoverflow.com/questions/30299529/ggplot2-define-plot-layout-with-grid-arrange-as-argument-of-do-call). How we make nicely arranged graphs. 
+
+\item sape research group (http://sape.inf.usi.ch/quick-reference/ggplot2/colour) Colors for ggplot are great
+
+\item Marc Böttinger (https://stats.stackexchange.com/questions/266592/how-to-calculate-r2-for-lasso-glmnet?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa) neat way of finding CV R-squared of lasso regression
+
+\item Online Stat book (http://onlinestatbook.com/2/advanced_graphs/q-q_plots.html) Info on QQplots
+
+\item Silverfish (https://stats.stackexchange.com/questions/125561/what-does-an-added-variable-plot-partial-regression-plot-explain-in-a-multiple?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa) Great explanation of Added Variable plots
+
+\item ISLR, PCA 
+
+\item Ahn Le (http://people.duke.edu/~aql3/gotta-plot-them-all/) inspiration for awesome way to use ggplot to incorporate sprites
+
+\end{itemize}
