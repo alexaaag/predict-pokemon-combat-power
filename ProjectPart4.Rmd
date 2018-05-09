@@ -432,31 +432,40 @@ pr.var=pca$sdev^2
 pve=pr.var/sum(pr.var)
 plot(pve, xlab="Principal Component", ylab="Proportion of Variance Explained ", ylim=c(0,1),type='l')
 ```
-
 Observe that the first two principal components explain nearly 60% of the variability in the data. As $M \to 10$, the marginal contribution to variability explained decreases. Our regression model will use cross validation to tune $M$, the number of components as predictors.
 
-```{r,echo=FALSE}
+The cross-validation uses $root\_mean\_squared\_error$ as the metric. $M=9$ returns the smallest cv score. 
+```{r,include=FALSE}
 library(pls)
 set.seed(47)
-train=sample(1:nrow(pokemondata),nrow(pokemondata)*2/3)
-pcr.fit = pcr(cpnew~.,data=pokemondata[train,],scale=TRUE,validation="CV")
+#train=sample(1:nrow(pokemondata),nrow(pokemondata)*2/3)
+pcr.fit = pcr(cpnew~.,data=pokemondata,scale=TRUE,validation="CV")
 summary(pcr.fit)
-#coefplot(pcr.fit)
 ```
-
-The metric of cross-validation is $root\_mean\_squared\_error$. Ideally, we want to pick $M$ where the CV score is minimized. 
 
 ```{r,echo=FALSE}
-validationplot(pcr.fit,val.type="MSEP")
+validationplot(pcr.fit,val.type="RMSE")
 ```
 
-We compute the test MSE as follows using $M=9$ components:
-```{r}
-pcr.pred=predict(pcr.fit,pokemondata[-train,],ncomp=9) 
-mean((pcr.pred-pokemondata[-train,]$cpnew)^2)
+Therefore we used all the components to build the linear regression model. Our result shows that all regression coefficients are signigicant and the adjusted $R^2=0.983$. 
+```{r,include=FALSE}
+#pcr.pred=predict(pcr.fit,pokemondata[-train,],ncomp=2) 
+#mean((pcr.pred-pokemondata[-train,]$cpnew)^2)
+pc1 = pca$x[,1] 
+pc2 = pca$x[,2]
+pc3 = pca$x[,3]
+pc4 = pca$x[,4]
+pc5 = pca$x[,5]
+pc6 = pca$x[,6]
+pc7 = pca$x[,7]
+pc8 = pca$x[,8]
+pc9 = pca$x[,9]
+summary(lm(pokemondata$cpnew~pc1+pc2+pc3+pc4+pc5+pc6+pc7+pc8+pc9))
 ```
 
-\subsubsection{Interpretation}
+Interpretation:
+
+Our principal component regression model performs really well in predicting $cp_new$. We also observe that our top two principal components (overall strength, attack strength) correspond to the predictors selected by LASSO (cp,attack_strong and attak_weak). However, we decide not to go with PCR model because it is not interpretable. 
 
 \section*{Summary: How to get the best Pokemon?}
 Are you a Pokemon Go player? Have you been struggling with trying to identify the strong pokemon and winning your battles? Are you curious if your pokemon will be good enough after evolution?
