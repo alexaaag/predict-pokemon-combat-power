@@ -10,7 +10,7 @@ You can read our progress throughout the semester under the folder [Progress Rep
 * Part III: Multiple Linear Regression
 * Final: Ridge, LASSO, Principal Component Analysis and Summary Graph. 
 
-** Read the [exploratory analysis](https://github.com/alexaaag/math158-project/blob/master/Exploratory.pdf) and the [final write-up](https://github.com/alexaaag/math158-project/blob/master/Final.pdf) for a high level analysis and really cool visualizations :) **
+Read the [exploratory analysis](https://github.com/alexaaag/math158-project/blob/master/Exploratory.pdf) and the [final write-up](https://github.com/alexaaag/math158-project/blob/master/Final.pdf) for a high level analysis and some cool visualizations!
 
 ---
 ### Background and Data Description
