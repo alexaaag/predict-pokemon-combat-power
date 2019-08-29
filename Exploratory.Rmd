@@ -1,0 +1,76 @@
+---
+title: "MATH158 Project Part 1"
+author: "Lathan Liou and Alex Gui"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(skimr)
+library(readr)
+library(gridExtra)
+pokemon <- read_csv("pokemon.csv")
+```
+
+### Data Description
+This data comes from OpenIntro, and the dataset contains 26 variables of interest, as listed below. The observational units are different Pokemon.
+
+\begin{enumerate}
+\item name: A unique name given to the Pokémon
+\item species: The Pokémon's type, e.g. Pidgey.
+\item cp: Pre-evolution Combat Power, which is a summary of the Pokémon's strength for battling prior to the evolution of the Pokémon.
+\item hp: Pre-evolution Hit Points, which is a summary of how difficult it is to weaken the Pokémon in a battle.
+\item weight: Pre-evolution weight, in kilograms.
+\item height: Pre-evolution height, in meters.
+\item power\_up\_stardust: Pre-evolution stardust required to power up the Pokémon.
+\item power\_up\_candy: Pre-evolution candy required to power up the Pokémon.
+\item attack\_weak: The name of the pre-evolution weaker attack of the Pokémon.
+\item attack\_weak\_type: The type of the pre-evolution weaker attack.
+\item attack\_weak\_value: The damage done by the pre-evolution weaker attack.
+\item attack\_strong: The name of the pre-evolution stronger attack.
+\item attack\_strong\_type: The type of the pre-evolution stronger attack.
+\item attack\_strong\_value: The damage done by the pre-evolution stronger attack.
+\item cp\_new: Post-evolution Combat Power.
+\item hp\_new: Post-evolution Hit Points.
+\item weight\_new: Post-evolution weight, in kilograms.
+\item height\_new: Post-evolution height, in meters.
+\item power\_up\_stardust\_new: Post-evolution stardust required to power up the Pokémon.
+\item power\_up\_candy\_new: Post-evolution candy required to power up the Pokémon.
+\item attack\_weak\_new: The name of the post-evolution weaker attack.
+\item attack\_weak\_type\_new: The type of the post-evolution weaker attack.
+\item attack\_weak\_value\_new: The damage done by the post-evolution weaker attack.
+\item attack\_strong\_new: The name of the post-evolution stronger attack.
+\item attack\_strong\_type\_new: The type of the post-evolution stronger attack.
+\item attack\_strong\_value\_new: The damage done by the post-evolution stronger attack.
+\end{enumerate}
+
+### Problem 2
+```{r, echo = FALSE}
+plot1 <- ggplot(pokemon, aes(x = weight, y = cp_new)) + 
+  geom_point(aes(col = species))
+
+plot2 <- ggplot(pokemon, aes(x=height, y=cp_new)) +
+  geom_point(aes(col = species)) 
+
+plot3 <- ggplot(pokemon, aes(x=power_up_stardust, y=cp_new)) + 
+  geom_point(aes(col = species))
+
+plot4 <- ggplot(pokemon, aes(x=hp, y=cp_new)) + 
+  geom_point(aes(col = species))
+
+grid.arrange(plot1, plot2, plot3, plot4, nrow = 2, ncol = 2, top = "Figure 1: Exploratory Plots")
+```
+
+
+Note: Skimr output is attached in separate paper. Had problems knitting skimr output. 
+
+In this project, we will mainly focus on: how can we predict a pokemon's combat power after evolution based on their previous combat features? 
+
+We first have a quick look at the old combat power in our data set: it has a median of 169, min of 10 and max of 619. The distribution is skewed to the right. The new combat power after evolution roughly doubles and the distribution is more skewed.
+
+As for the continuous variables, weight distribution is also skewed to the right whereas height is more homogenously distributed. As for the categorical variables, attach strong and attack weak are not evenly distributed. It seems like there are more pokemon in some certain attack strong values. Interestingly, power up stardust does not change before and after evolution.The distribution of cp_new is skewed right. Other distributions of note are those of height and hp, which are fairly symmetrical. Some relationships that we decided to highlight were weight vs. cp, height vs. cp, power_up_stardust vs. cp, and hp vs. cp, with the data points colored by species. 
+
+Sampling is from a random process, based on our understanding of the game mechanics, in which a randomly generated pokemon with randomly generated stats will appear, available for capture. In other words, if everyone in our class captured 100 Pidgeys, we would all have similar distributions of Pidgeys's stats. This data could be representative of all Pidgey, Caterpie, Eevee, and Weedle in the mobile game, Pokemon Go. 
+
