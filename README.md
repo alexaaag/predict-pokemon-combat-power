@@ -2,9 +2,9 @@
 
 This is a class project for MATH158 Statistical Linear Models at Pomona College.
 
-In this project we experimented with different linear models to predict a pokemon's combat power after evolution based on their previous combat features.
+We experimented with different linear models to predict a pokemon's combat power after evolution based on their previous combat features.
 
-You can read our progress throughout the semester under the folder "Progress Report"
+You can read our progress throughout the semester under the folder [Progress Report](https://github.com/alexaaag/math158-project/tree/master/Progress%20Report)
 * Part I: Exploratory analysis
 * Part II: Simple Linear Regression
 * Part III: Multiple Linear Regression
